@@ -24,7 +24,7 @@ const Navbar = () => {
 				{/* Logo */}
 				<Link href="/" className="flex items-center">
 					<div className="text-[28px] md:text-[32px] text-white font-serif">
-						MyLogo
+						CoreRealm
 					</div>
 				</Link>
 
@@ -38,7 +38,7 @@ const Navbar = () => {
 						type="text"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						placeholder="Enter Text"
+						placeholder="Search for Games, Events, and more"
 					/>
 					<button
 						onClick={() => {
