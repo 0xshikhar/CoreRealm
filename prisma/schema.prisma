@@ -26,6 +26,98 @@ model User {
   bio          String?
   NFTid      String?
 
+  // Game-related relations
+  userGames     UserGame[]
+  createdEvents GameEvent[]
+  eventParticipations EventParticipant[]
+
   @@index([walletAddress])
+}
+
+// Game model to store game information
+model Game {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  imageUrl      String
+  slug          String    @unique
+  difficulty    String    // "easy", "medium", "hard"
+  category      String    // "puzzle", "word", "memory", etc.
+  instructions  String    @db.Text
+  isActive      Boolean   @default(true)
+  isFeatured    Boolean   @default(false)
+  playerCount   Int       @default(0)
+  likeCount     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  gameEvents    GameEvent[]
+  userGames     UserGame[]
+  
+  @@index([category])
+  @@index([isActive, isFeatured])
+}
+
+// GameEvent model to store game-related events
+model GameEvent {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  imageUrl      String
+  startTime     DateTime
+  endTime       DateTime?
+  location      String?   // Could be "online" or a physical location
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  gameId        String
+  game          Game      @relation(fields: [gameId], references: [id])
+  creatorId     String
+  creator       User      @relation(fields: [creatorId], references: [id])
+  participants  EventParticipant[]
+  
+  @@index([startTime])
+  @@index([isActive])
+  @@index([gameId])
+}
+
+// EventParticipant model to track event participation
+model EventParticipant {
+  id            String    @id @default(cuid())
+  status        String    // "registered", "attended", "completed"
+  registeredAt  DateTime  @default(now())
+  
+  // Relations
+  eventId       String
+  event         GameEvent @relation(fields: [eventId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  @@unique([eventId, userId])
+}
+
+// UserGame model to track user game progress and achievements
+model UserGame {
+  id            String    @id @default(cuid())
+  score         Int       @default(0)
+  highScore     Int       @default(0)
+  playCount     Int       @default(0)
+  lastPlayedAt  DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  gameId        String
+  game          Game      @relation(fields: [gameId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  @@unique([gameId, userId])
+  @@index([userId])
+  @@index([highScore])
 }
 

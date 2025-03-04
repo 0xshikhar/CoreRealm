@@ -70,7 +70,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head />
       <body
         className={cn(
-          "min-h-screen bg-background antialiased flex flex-col",
+          "min-h-screen antialiased flex flex-col",
           inter.className
         )}
       >
@@ -81,10 +81,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           <Providers>
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
+            <div
+              className="flex flex-col min-h-screen w-full"
+              style={{
+                backgroundImage: "url('./images/background.png')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              <Navbar />
+              <main className="flex-1 relative z-10">
+                {children}
+              </main>
+            </div>
           </Providers>
         </ThemeProvider>
       </body>
