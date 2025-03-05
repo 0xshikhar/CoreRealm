@@ -1,5 +1,5 @@
 import React from 'react';
-import WordleGame from '@/components/wordle';
+import WordleGame from '@/components/wordle-game';
 import Link from 'next/link';
 import { BsArrowLeft } from 'react-icons/bs';
 import gameWords from '@/data/words.json';
