@@ -84,7 +84,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <div
               className="flex flex-col min-h-screen w-full"
               style={{
-                backgroundImage: "url('./images/background.png')",
+                backgroundImage: "url('/images/background.png')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
