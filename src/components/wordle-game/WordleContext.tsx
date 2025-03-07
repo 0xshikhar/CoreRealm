@@ -251,7 +251,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, gameWords,
     const toggleDarkMode = () => {
         const newMode = !isDarkMode;
         setIsDarkMode(newMode);
-        localStorage.setItem('darkMode', JSON.stringify(newMode));
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('darkMode', JSON.stringify(newMode));
+        }
         document.documentElement.classList.toggle('dark', newMode);
     };
 

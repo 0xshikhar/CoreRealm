@@ -60,13 +60,23 @@ const Navbar = () => {
 					>
 						Explore
 					</div>
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
+						onClick={() => router.push("/games")}
+					>
+						Games
+					</div>
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
+						onClick={() => router.push("/events")}
+					>
+						Events
+					</div>
 					<div
-						className="font-bold flex items-center text-[#8a939b] text-xl px-4 hover:text-white cursor-pointer"
+						className="font-bold flex items-center text-[#8a939b] px-4 hover:text-white cursor-pointer"
 						onClick={() => router.push("/nft")}
 					>
 						<CgProfile className="mr-2" /> NFTProfile
 					</div>
-					<div className="text-[#c8cacd] hover:text-white text-xl cursor-pointer px-4 font-bold flex items-center"
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold flex items-center"
 						onClick={() => router.push("/token")}
 					>
 						<MdOutlineAccountBalanceWallet className="mr-2" /> Token

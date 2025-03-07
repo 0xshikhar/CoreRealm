@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui";
-import { Play, Pause, RotateCw, ChevronLeft, ChevronRight, ChevronDown, HelpCircle, Info } from "lucide-react";
+import { Play, Pause, RotateCw, ChevronLeft, ChevronRight, ChevronDown, HelpCircle, Info, Trophy, Share2, BarChart2 } from "lucide-react";
 import { GameBoard, ScorePanel, InfoDialog } from "./TetrisComponents";
 import { GameControls, GameOverlay } from "./TetrisControls";
 import { Tetromino } from "./TetrisTypes";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import StatsDialog from "./StatsDialog";
 
 // Game Constants
 export const BOARD_WIDTH = 10;
@@ -85,9 +87,18 @@ const TetrisGame = () => {
     const [infoOpen, setInfoOpen] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
     const [highScore, setHighScore] = useState(0);
+    const [gameStats, setGameStats] = useState({
+        gamesPlayed: 0,
+        totalScore: 0,
+        totalLines: 0,
+        bestLevel: 1,
+    });
+    const [showStats, setShowStats] = useState(false);
+    const router = useRouter();
 
     const gameInterval = useRef<NodeJS.Timeout | null>(null);
     const dropSpeed = useRef(1000 - (level - 1) * 50);
+    const gameStartTime = useRef(Date.now());
 
     // Create empty board
     function createEmptyBoard() {
@@ -124,6 +135,7 @@ const TetrisGame = () => {
     const startGame = useCallback(() => {
         initGame();
         setGameStarted(true);
+        gameStartTime.current = Date.now();
     }, [initGame]);
 
     // Check for collision
@@ -216,6 +228,7 @@ const TetrisGame = () => {
             const lineText = completedLines.length === 1 ? "line" : "lines";
             toast.success(`${completedLines.length} ${lineText} cleared!`, {
                 description: `+${linePoints[completedLines.length - 1] * level} points`,
+                position: "bottom-right"
             });
 
             if (newLevel !== level) {
@@ -225,6 +238,7 @@ const TetrisGame = () => {
                 // Show toast for level up
                 toast.success(`You've reached level ${newLevel}`, {
                     description: `+${linePoints[completedLines.length - 1] * level} points`,
+                    position: "bottom-right"
                 });
             }
         }
@@ -237,6 +251,18 @@ const TetrisGame = () => {
 
     // Handle game over
     const handleGameOver = useCallback(() => {
+        // Update game statistics
+        const newStats = {
+            gamesPlayed: gameStats.gamesPlayed + 1,
+            totalScore: gameStats.totalScore + score,
+            totalLines: gameStats.totalLines + lines,
+            bestLevel: Math.max(gameStats.bestLevel, level)
+        };
+        setGameStats(newStats);
+
+        // Save stats to localStorage
+        localStorage.setItem('tetrisStats', JSON.stringify(newStats));
+
         // Check if current score is higher than high score
         if (score > highScore) {
             setHighScore(score);
@@ -244,23 +270,46 @@ const TetrisGame = () => {
 
             toast.success("New High Score 🥳🥳🥳!", {
                 description: `Congratulations! You've set a new high score of ${score}!`,
+                position: "bottom-right"
             });
         } else {
-            toast.error(`Your final score is ${score}. Try again!`);
+            toast.error(`Game Over! Your final score is ${score}.`, {
+                description: `Try again to beat the high score of ${highScore}!`,
+                position: "bottom-right"
+            });
         }
+
+        // Record game session data for analytics
+        const gameSession = {
+            date: new Date().toISOString(),
+            score,
+            level,
+            lines,
+            duration: Math.floor((Date.now() - gameStartTime.current) / 1000),
+        };
+
+        // Save session to localStorage
+        const sessions = JSON.parse(localStorage.getItem('tetrisSessions') || '[]');
+        sessions.push(gameSession);
+        localStorage.setItem('tetrisSessions', JSON.stringify(sessions.slice(-10))); // Keep last 10 sessions
 
         // Clear game interval
         if (gameInterval.current) {
             clearInterval(gameInterval.current);
             gameInterval.current = null;
         }
-    }, [score, highScore]);
+    }, [score, highScore, lines, level, gameStats]);
 
-    // Load high score from localStorage on component mount
+    // Load game stats from localStorage on component mount
     useEffect(() => {
         const savedHighScore = localStorage.getItem('tetrisHighScore');
         if (savedHighScore) {
             setHighScore(parseInt(savedHighScore, 10));
+        }
+
+        const savedStats = localStorage.getItem('tetrisStats');
+        if (savedStats) {
+            setGameStats(JSON.parse(savedStats));
         }
     }, []);
 
@@ -430,11 +479,42 @@ const TetrisGame = () => {
         return boardCopy;
     }, [board, currentPiece, position]);
 
+    // Add a function to view detailed stats
+    const viewDetailedStats = () => {
+        setShowStats(true);
+    };
+
+    // Add a function to share score
+    const shareScore = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: 'My Tetris Score',
+                text: `I scored ${score} points in Tetris! Can you beat that?`,
+                url: window.location.href,
+            }).catch(err => {
+                toast.error("Couldn't share your score", {
+                    position: "bottom-right"
+                });
+            });
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(`I scored ${score} points in Tetris! Can you beat that? Play at ${window.location.href}`);
+            toast.success("Score copied to clipboard!", {
+                position: "bottom-right"
+            });
+        }
+    };
+
+    // Add a function to navigate to leaderboard (to be implemented)
+    const viewLeaderboard = () => {
+        router.push('/games/tetris/leaderboard');
+    };
+
     return (
         <div className="flex flex-col items-center justify-center text-foreground p-4">
-            <Card className="w-full max-w-4xl text-card-foreground">
+            <Card className={`w-full max-w-4xl bg-gradient-to-r from-teal-200 to-lime-200 opacity-90 text-card-foreground text-black ${!gameStarted ? "bg-gradient-to-r from-teal-200 to-lime-200" : "bg-transparent/50 "}`}>
                 <CardHeader className="flex flex-row items-center bg-transparent opacity-50 justify-between pb-2">
-                    <CardTitle className="text-2xl font-bold">Tetris Game</CardTitle>
+                    <CardTitle className={`text-2xl font-bold ${!gameStarted ? "text-black" : "text-white"}`}>Tetris Game</CardTitle>
                     <Button variant="ghost" size="icon" onClick={() => setInfoOpen(true)}>
                         <HelpCircle className="h-5 w-5" />
                     </Button>
@@ -444,7 +524,7 @@ const TetrisGame = () => {
                     {!gameStarted ? (
                         <div className="flex flex-col items-center justify-center space-y-6 p-8">
                             <h2 className="text-3xl font-bold text-center">Welcome to Tetris</h2>
-                            <p className="text-center text-muted-foreground max-w-md">
+                            <p className="text-center text-gray-700 max-w-md">
                                 Click the button below to start playing. Use arrow keys to move and rotate pieces.
                             </p>
                             {highScore > 0 && (
@@ -481,8 +561,8 @@ const TetrisGame = () => {
                 </CardContent>
 
                 <CardFooter className="flex justify-between pt-0">
-                    <div className="text-xs text-muted-foreground">Gaming Platform</div>
-                    <div className="text-xs text-muted-foreground">v1.0</div>
+                    {/* <div className="text-xs text-muted-foreground">CoreDAO Platform</div> */}
+                    <div className="text-xs text-black font-bold">v1.0</div>
                 </CardFooter>
             </Card>
 
@@ -491,11 +571,22 @@ const TetrisGame = () => {
                 score={score}
                 onRestart={startGame}
                 highScore={highScore}
+                onViewStats={viewDetailedStats}
+                onShareScore={shareScore}
+                onViewLeaderboard={viewLeaderboard}
+                gameStats={gameStats}
             />
 
             <InfoDialog
                 open={infoOpen}
                 onClose={() => setInfoOpen(false)}
+            />
+
+            <StatsDialog
+                open={showStats}
+                onClose={() => setShowStats(false)}
+                gameStats={gameStats}
+                sessions={JSON.parse(localStorage.getItem('tetrisSessions') || '[]')}
             />
         </div>
     );

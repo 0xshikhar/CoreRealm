@@ -55,7 +55,7 @@ const ScorePanel: React.FC<ScorePanelProps> = ({ score, level, lines, nextPiece,
                                     key={`next-${y}-${x}`}
                                     className={`aspect-square w-5 ${cell
                                         ? nextPiece.color
-                                        : "bg-transparent"
+                                        : "bg-white/70"
                                         } border rounded-sm`}
                                 />
                             ))

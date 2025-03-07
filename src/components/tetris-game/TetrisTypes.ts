@@ -30,6 +30,15 @@ export interface GameOverlayProps {
     score: number;
     onRestart: () => void;
     highScore: number;
+    onViewStats?: () => void;
+    onShareScore?: () => void;
+    onViewLeaderboard?: () => void;
+    gameStats: {
+        gamesPlayed: number;
+        totalScore: number;
+        totalLines: number;
+        bestLevel: number;
+    };
 }
 
 export interface InfoDialogProps {
@@ -39,4 +48,22 @@ export interface InfoDialogProps {
 
 export interface TetrisGameProps {
     // Any props for the main game component
+}
+
+export interface StatsDialogProps {
+    open: boolean;
+    onClose: () => void;
+    gameStats: {
+        gamesPlayed: number;
+        totalScore: number;
+        totalLines: number;
+        bestLevel: number;
+    };
+    sessions?: Array<{
+        date: string;
+        score: number;
+        level: number;
+        lines: number;
+        duration: number;
+    }>;
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { BiHeart } from 'react-icons/bi'
-import Router from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { IpfsImage } from 'react-ipfs-image'
 import Image from 'next/image'
 
@@ -23,10 +23,16 @@ const style = {
     likeIcon: `text-xl mr-2`,
 }
 
-const EventCard = ({ eventItem, title, listings }) => {
+interface EventCardProps {
+    eventItem: any;
+    title: string;
+    listings: any[];
+}
+
+const EventCard: React.FC<EventCardProps> = ({ eventItem, title, listings }) => {
     const [isListed, setIsListed] = useState(false)
     const [price, setPrice] = useState(0)
-
+    const router = useRouter()
     useEffect(() => {
         const listing = listings.find((listing) => listing.asset.id === eventItem.id)
         if (Boolean(listing)) {
@@ -39,14 +45,11 @@ const EventCard = ({ eventItem, title, listings }) => {
         <div key={eventItem.id}
             className={style.wrapper}
             onClick={() => {
-                Router.push({
-                    pathname: `/nfts/${eventItem.id}`,
-                    query: { isListed: isListed },
-                })
+                router.push(`/nfts/${eventItem.id}?isListed=${isListed}`)
             }}
         >
             <div className={style.imgContainer}>
-                {eventItem.image ? <IpfsImage hash={eventItem.image} alt='my image' className='m-10 mt-2  h-120 w-200 rounded-lg ' onClick={() => { }} />
+                {eventItem.image ? <IpfsImage hash={eventItem.image} className='m-10 mt-2  h-120 w-200 rounded-lg ' onClick={() => { }} />
                     : ""}
                 {/* <img src={eventItem.image} alt={eventItem.name} className={style.nftImg} /> */}
             </div>
