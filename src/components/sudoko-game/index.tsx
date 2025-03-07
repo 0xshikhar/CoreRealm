@@ -16,7 +16,7 @@ import { SudokuBoard, NumberControls, GameControls, GameStatus, DifficultySelect
 const SudokuGame = () => {
     return (
         <GameProvider>
-            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 text-foreground">
                 <Card className="w-full max-w-md shadow-lg relative">
                     <KeyboardShortcutsHelp />
                     <CardHeader className="pb-2">

@@ -13,4 +13,4 @@ export { Separator } from './separator';
 export { Label } from './label';
 export { Checkbox } from './checkbox';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
-
+export { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogDescription, AlertDialogFooter } from './alert-dialog';

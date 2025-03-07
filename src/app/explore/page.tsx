@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const explore = () => {
     return (
-        <div className="min-h-screen">
+        <div className="">
             <figure className="flex flex-col items-center justify-center pt-10 pb-10">
                 <div className="rounded-3xl bg-[url('https://shikhar.xyz/wp-content/uploads/2023/06/eventPage.png')] before:bg-center before:opacity-0">
                     <div className="text-left pb-10 align-middle min-w-[1100px] h-[300px] pl-10 p-5 dark:bg-black dark:border-gray-700">
