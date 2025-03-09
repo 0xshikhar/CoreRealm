@@ -7,7 +7,7 @@ export async function createAuthMessage(address: string, chainId: number) {
     const message = new SiweMessage({
         domain: window.location.host,
         address,
-        statement: 'Sign in to Next Demo application',
+        statement: 'Sign in to Core Realm',
         uri: window.location.origin,
         version: '1',
         chainId,
