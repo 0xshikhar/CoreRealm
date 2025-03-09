@@ -6,6 +6,7 @@ export interface Tetromino {
 
 export interface GameBoardProps {
     board: (string | number)[][];
+    isGameOver?: boolean;
 }
 
 export interface ScorePanelProps {

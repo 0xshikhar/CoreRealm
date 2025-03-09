@@ -3,10 +3,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { GameBoardProps, ScorePanelProps, GameControlsProps, GameOverlayProps, InfoDialogProps, TetrisGameProps } from "./TetrisTypes";
 
 // Component GameBoard
-const GameBoard: React.FC<GameBoardProps> = ({ board }) => {
+const GameBoard: React.FC<GameBoardProps> = ({ board, isGameOver }) => {
     return (
         <div className="relative bg-gray-900 dark:bg-gray-950 border-4 border-gray-700 dark:border-gray-800 rounded-md overflow-hidden shadow-lg">
-            <div className="grid grid-cols-10 gap-0.5 p-0.5">
+            <div className={`grid grid-cols-10 gap-0.5 p-0.5 ${isGameOver ? 'game-over' : ''}`}>
                 {board.map((row, y) =>
                     row.map((cell, x) => (
                         <div
@@ -17,6 +17,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ board }) => {
                     ))
                 )}
             </div>
+            {isGameOver && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-white text-2xl font-bold animate-pulse">GAME OVER</div>
+                </div>
+            )}
         </div>
     );
 };

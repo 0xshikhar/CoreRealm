@@ -86,7 +86,7 @@ const TetrisGame = () => {
     const [isPaused, setIsPaused] = useState(false);
     const [infoOpen, setInfoOpen] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
-    const [highScore, setHighScore] = useState(0);
+    const [highScore, setHighScore] = useState(100000);
     const [gameStats, setGameStats] = useState({
         gamesPlayed: 0,
         totalScore: 0,
@@ -99,6 +99,9 @@ const TetrisGame = () => {
     const gameInterval = useRef<NodeJS.Timeout | null>(null);
     const dropSpeed = useRef(1000 - (level - 1) * 50);
     const gameStartTime = useRef(Date.now());
+
+    // Add a ref to solve the circular dependency
+    const handleGameOverRef = useRef<() => void>();
 
     // Create empty board
     function createEmptyBoard() {
@@ -133,8 +136,15 @@ const TetrisGame = () => {
 
     // Start the game
     const startGame = useCallback(() => {
+        // Clear any existing game state
+        if (gameInterval.current) {
+            clearInterval(gameInterval.current);
+            gameInterval.current = null;
+        }
+
         initGame();
         setGameStarted(true);
+        setIsGameOver(false); // Explicitly reset game over state
         gameStartTime.current = Date.now();
     }, [initGame]);
 
@@ -170,87 +180,14 @@ const TetrisGame = () => {
         return false;
     }, [board]);
 
-    // Add current piece to board
-    const addPieceToBoard = useCallback(() => {
-        if (!currentPiece) return;
-
-        const newBoard = [...board];
-
-        // Add tetromino to the board
-        for (let y = 0; y < currentPiece.shape.length; y++) {
-            for (let x = 0; x < currentPiece.shape[y].length; x++) {
-                if (currentPiece.shape[y][x]) {
-                    const boardY = position.y + y;
-                    const boardX = position.x + x;
-
-                    if (boardY < 0) {
-                        // Game over if piece is above the board
-                        setIsGameOver(true);
-                        handleGameOver();
-                        return;
-                    }
-
-                    newBoard[boardY][boardX] = currentPiece.color;
-                }
-            }
-        }
-
-        setBoard(newBoard);
-
-        // Check for completed lines
-        const completedLines: number[] = [];
-        newBoard.forEach((row, index) => {
-            if (row.every(cell => cell !== 0)) {
-                completedLines.push(index);
-            }
-        });
-
-        if (completedLines.length > 0) {
-            // Remove completed lines
-            const newBoardAfterLineClears = [...newBoard];
-            completedLines.forEach(line => {
-                newBoardAfterLineClears.splice(line, 1);
-                newBoardAfterLineClears.unshift(Array(BOARD_WIDTH).fill(0));
-            });
-
-            setBoard(newBoardAfterLineClears);
-
-            // Update score and level
-            const linePoints = [40, 100, 300, 1200]; // Points for 1, 2, 3, 4 lines
-            const newScore = score + linePoints[completedLines.length - 1] * level;
-            const newLines = lines + completedLines.length;
-            const newLevel = Math.floor(newLines / 10) + 1;
-
-            setScore(newScore);
-            setLines(newLines);
-
-            // Show toast for line clears
-            const lineText = completedLines.length === 1 ? "line" : "lines";
-            toast.success(`${completedLines.length} ${lineText} cleared!`, {
-                description: `+${linePoints[completedLines.length - 1] * level} points`,
-                position: "bottom-right"
-            });
-
-            if (newLevel !== level) {
-                setLevel(newLevel);
-                dropSpeed.current = Math.max(100, 1000 - (newLevel - 1) * 50);
-
-                // Show toast for level up
-                toast.success(`You've reached level ${newLevel}`, {
-                    description: `+${linePoints[completedLines.length - 1] * level} points`,
-                    position: "bottom-right"
-                });
-            }
-        }
-
-        // Get next piece
-        setCurrentPiece(nextPiece);
-        setNextPiece(randomTetromino());
-        setPosition({ x: Math.floor(BOARD_WIDTH / 2) - 1, y: 0 });
-    }, [board, currentPiece, nextPiece, position, randomTetromino, score, level, lines]);
-
-    // Handle game over
+    // Define handleGameOver first
     const handleGameOver = useCallback(() => {
+        // Clear game interval
+        if (gameInterval.current) {
+            clearInterval(gameInterval.current);
+            gameInterval.current = null;
+        }
+
         // Update game statistics
         const newStats = {
             gamesPlayed: gameStats.gamesPlayed + 1,
@@ -293,25 +230,20 @@ const TetrisGame = () => {
         sessions.push(gameSession);
         localStorage.setItem('tetrisSessions', JSON.stringify(sessions.slice(-10))); // Keep last 10 sessions
 
-        // Clear game interval
-        if (gameInterval.current) {
-            clearInterval(gameInterval.current);
-            gameInterval.current = null;
+        // Add visual effect to show game over
+        const boardElement = document.querySelector('.grid-cols-10');
+        if (boardElement) {
+            boardElement.classList.add('opacity-50');
+            setTimeout(() => {
+                boardElement.classList.remove('opacity-50');
+            }, 2000);
         }
     }, [score, highScore, lines, level, gameStats]);
 
-    // Load game stats from localStorage on component mount
+    // Update the ref whenever handleGameOver changes
     useEffect(() => {
-        const savedHighScore = localStorage.getItem('tetrisHighScore');
-        if (savedHighScore) {
-            setHighScore(parseInt(savedHighScore, 10));
-        }
-
-        const savedStats = localStorage.getItem('tetrisStats');
-        if (savedStats) {
-            setGameStats(JSON.parse(savedStats));
-        }
-    }, []);
+        handleGameOverRef.current = handleGameOver;
+    }, [handleGameOver]);
 
     // Move piece
     const movePiece = useCallback((direction: number) => {
@@ -364,6 +296,94 @@ const TetrisGame = () => {
             }
         }
     }, [checkCollision, currentPiece, position, isPaused, isGameOver]);
+
+    // Now modify addPieceToBoard to use the ref
+    const addPieceToBoard = useCallback(() => {
+        if (!currentPiece) return;
+
+        const newBoard = [...board];
+
+        // Add tetromino to the board
+        for (let y = 0; y < currentPiece.shape.length; y++) {
+            for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                if (currentPiece.shape[y][x]) {
+                    const boardY = position.y + y;
+                    const boardX = position.x + x;
+
+                    if (boardY < 0) {
+                        // Game over if piece is above the board
+                        setIsGameOver(true);
+                        handleGameOverRef.current?.();
+                        return;
+                    }
+
+                    newBoard[boardY][boardX] = currentPiece.color;
+                }
+            }
+        }
+
+        setBoard(newBoard);
+
+        // Check for completed lines
+        const completedLines: number[] = [];
+        newBoard.forEach((row, index) => {
+            if (row.every(cell => cell !== 0)) {
+                completedLines.push(index);
+            }
+        });
+
+        if (completedLines.length > 0) {
+            // Remove completed lines
+            const newBoardAfterLineClears = [...newBoard];
+            completedLines.forEach(line => {
+                newBoardAfterLineClears.splice(line, 1);
+                newBoardAfterLineClears.unshift(Array(BOARD_WIDTH).fill(0));
+            });
+
+            setBoard(newBoardAfterLineClears);
+
+            // Update score and level
+            const linePoints = [40, 100, 300, 1200]; // Points for 1, 2, 3, 4 lines
+            const newScore = score + linePoints[completedLines.length - 1] * level;
+            const newLines = lines + completedLines.length;
+            const newLevel = Math.floor(newLines / 10) + 1;
+
+            setScore(newScore);
+            setLines(newLines);
+
+            // Show toast for line clears
+            const lineText = completedLines.length === 1 ? "line" : "lines";
+            toast.success(`${completedLines.length} ${lineText} cleared!`, {
+                description: `+${linePoints[completedLines.length - 1] * level} points`,
+                position: "bottom-right"
+            });
+
+            if (newLevel !== level) {
+                setLevel(newLevel);
+                dropSpeed.current = Math.max(100, 1000 - (newLevel - 1) * 50);
+
+                // Show toast for level up
+                toast.success(`You've reached level ${newLevel}`, {
+                    description: `Speed increased!`,
+                    position: "bottom-right"
+                });
+            }
+        }
+
+        // Get next piece
+        setCurrentPiece(nextPiece);
+        setNextPiece(randomTetromino());
+        const newPosition = { x: Math.floor(BOARD_WIDTH / 2) - 1, y: 0 };
+        setPosition(newPosition);
+
+        // Check if the new piece can be placed at the starting position
+        // If not, game over
+        if (checkCollision(nextPiece, newPosition)) {
+            setIsGameOver(true);
+            handleGameOverRef.current?.();
+        }
+    }, [board, currentPiece, nextPiece, position, randomTetromino, score, level, lines, checkCollision]);
+
 
     // Drop piece one row
     const dropPiece = useCallback(() => {
@@ -510,6 +530,19 @@ const TetrisGame = () => {
         router.push('/games/tetris/leaderboard');
     };
 
+    // Load game stats from localStorage on component mount
+    useEffect(() => {
+        const savedHighScore = localStorage.getItem('tetrisHighScore');
+        if (savedHighScore) {
+            setHighScore(parseInt(savedHighScore, 10));
+        }
+
+        const savedStats = localStorage.getItem('tetrisStats');
+        if (savedStats) {
+            setGameStats(JSON.parse(savedStats));
+        }
+    }, []);
+
     return (
         <div className="flex flex-col items-center justify-center text-foreground p-4">
             <Card className={`w-full max-w-4xl bg-gradient-to-r from-teal-200 to-lime-200 opacity-90 text-card-foreground text-black ${!gameStarted ? "bg-gradient-to-r from-teal-200 to-lime-200" : "bg-transparent/50 "}`}>
@@ -536,7 +569,7 @@ const TetrisGame = () => {
                         </div>
                     ) : (
                         <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-6">
-                            <GameBoard board={renderBoard()} />
+                            <GameBoard board={renderBoard()} isGameOver={isGameOver} />
 
                             <div className="flex flex-col space-y-6 w-full md:w-auto">
                                 <ScorePanel
