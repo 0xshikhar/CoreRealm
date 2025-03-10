@@ -1,3 +1,4 @@
+"use client"
 import React, { useEffect } from "react";
 import { useGame } from "./GameContext";
 import { Card, CardContent } from "@/components/ui";

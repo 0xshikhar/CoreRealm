@@ -1,3 +1,4 @@
+"use client"
 import React, { Dispatch, SetStateAction } from "react";
 import { HelpCircle, Send, RefreshCcw, Keyboard, Timer, Trophy, Info } from "lucide-react";
 import { useGame } from "./GameContext";
@@ -35,7 +36,7 @@ function GameControls({ keyboardMode, setKeyboardMode, timerActive, setTimerActi
                     <Trophy className="h-4 w-4 text-primary" />
                     <AlertTitle>Congratulations!</AlertTitle>
                     <AlertDescription>
-                        You've successfully completed the Crypto Crossword puzzle in {formattedTime}!
+                        You&apos;ve successfully completed the Crypto Crossword puzzle in {formattedTime}!
                         <Button
                             variant="outline"
                             size="sm"
