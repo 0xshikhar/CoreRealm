@@ -1,3 +1,5 @@
+"use client"
+
 import WordleGame from './WordleGame';
 import gameWords from '@/data/words.json';       // Wordle answers
 import validWords from '@/data/validWords.json'; // Valid dictionary words

@@ -1,5 +1,7 @@
+"use client"
+
 import React from 'react';
-import WordleGame from '@/components/wordle-game';
+import { WordleGame } from '@/components/wordle-game';
 import Link from 'next/link';
 import { BsArrowLeft } from 'react-icons/bs';
 import gameWords from '@/data/words.json';
@@ -30,8 +32,11 @@ export default function WordlePage() {
                     <BsArrowLeft className="mr-2" /> Back to Games
                 </Link>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                    <WordleGame gameWords={gameWords} validWords={validWords} />
+                <div className="max-w-4xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-6 text-center">Wordle Game</h1>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                        <WordleGame />
+                    </div>
                 </div>
             </div>
         </div>

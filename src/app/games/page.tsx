@@ -38,7 +38,7 @@ const GamesPage = () => {
                     <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
                         <div className="relative">
                             <Image
-                                src="/images/puzzle-blocks.png"
+                                src="/images/game/block-puzzle.png"
                                 alt="Block Puzzle"
                                 width={500}
                                 height={300}
@@ -77,7 +77,7 @@ const GamesPage = () => {
                     <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
                         <div className="relative">
                             <Image
-                                src="/images/word-master.png"
+                                src="/images/game/word-master.png"
                                 alt="Word Master"
                                 width={500}
                                 height={300}
@@ -109,11 +109,11 @@ const GamesPage = () => {
                         </div>
                     </div>
 
-                    {/* Game Card 3 */}
+                    {/* Game Card 3 - Memory Match */}
                     <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
                         <div className="relative">
                             <Image
-                                src="/images/memory-match.png"
+                                src="/images/game/memory-match.png"
                                 alt="Memory Match"
                                 width={500}
                                 height={300}
@@ -148,47 +148,11 @@ const GamesPage = () => {
                         </div>
                     </div>
 
-                    {/* Game Card 4 */}
+                    {/* Game Card 4 - Sudoku Challenge */}
                     <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
                         <div className="relative">
                             <Image
-                                src="/images/number-slide.png"
-                                alt="Number Slide"
-                                width={500}
-                                height={300}
-                                className="w-full h-48 object-cover"
-                            />
-                        </div>
-                        <div className="p-5">
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="text-xl font-bold text-white">Number Slide</h3>
-                                <div className="flex items-center text-gray-400">
-                                    <BiHeart className="mr-1" />
-                                    <span>156</span>
-                                </div>
-                            </div>
-                            <p className="text-gray-400 mb-4">Slide numbered tiles to arrange them in order</p>
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center text-gray-400 text-sm">
-                                    <FaGamepad className="mr-1" />
-                                    <span>4K+ players</span>
-                                </div>
-                                <Link
-                                    href="/games/number-slide"
-                                    className="flex items-center bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
-                                >
-                                    Play Now
-                                    <BsArrowRight className="ml-2" />
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Game Card 5 */}
-                    <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
-                        <div className="relative">
-                            <Image
-                                src="/images/sudoku.png"
+                                src="/images/game/sudoku.png"
                                 alt="Sudoku Challenge"
                                 width={500}
                                 height={300}
@@ -220,11 +184,11 @@ const GamesPage = () => {
                         </div>
                     </div>
 
-                    {/* Game Card 6 */}
+                    {/* Game Card 5 - Crypto Crossword */}
                     <div className="bg-[#202020] rounded-lg overflow-hidden hover:shadow-[0_0_15px_rgba(152,238,44,0.3)] transition-all duration-300">
                         <div className="relative">
                             <Image
-                                src="/images/crypto-crossword.png"
+                                src="/images/game/crypto-crossword.png"
                                 alt="Crypto Crossword"
                                 width={500}
                                 height={300}

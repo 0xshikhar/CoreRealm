@@ -197,38 +197,40 @@ const TetrisGame = () => {
         };
         setGameStats(newStats);
 
-        // Save stats to localStorage
-        localStorage.setItem('tetrisStats', JSON.stringify(newStats));
+        // Save stats to localStorage (only in browser environment)
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('tetrisStats', JSON.stringify(newStats));
 
-        // Check if current score is higher than high score
-        if (score > highScore) {
-            setHighScore(score);
-            localStorage.setItem('tetrisHighScore', score.toString());
+            // Check if current score is higher than high score
+            if (score > highScore) {
+                setHighScore(score);
+                localStorage.setItem('tetrisHighScore', score.toString());
 
-            toast.success("New High Score 🥳🥳🥳!", {
-                description: `Congratulations! You've set a new high score of ${score}!`,
-                position: "bottom-right"
-            });
-        } else {
-            toast.error(`Game Over! Your final score is ${score}.`, {
-                description: `Try again to beat the high score of ${highScore}!`,
-                position: "bottom-right"
-            });
+                toast.success("New High Score 🥳🥳🥳!", {
+                    description: `Congratulations! You've set a new high score of ${score}!`,
+                    position: "bottom-right"
+                });
+            } else {
+                toast.error(`Game Over! Your final score is ${score}.`, {
+                    description: `Try again to beat the high score of ${highScore}!`,
+                    position: "bottom-right"
+                });
+            }
+
+            // Record game session data for analytics
+            const gameSession = {
+                date: new Date().toISOString(),
+                score,
+                level,
+                lines,
+                duration: Math.floor((Date.now() - gameStartTime.current) / 1000),
+            };
+
+            // Save session to localStorage
+            const sessions = JSON.parse(localStorage.getItem('tetrisSessions') || '[]');
+            sessions.push(gameSession);
+            localStorage.setItem('tetrisSessions', JSON.stringify(sessions.slice(-10))); // Keep last 10 sessions
         }
-
-        // Record game session data for analytics
-        const gameSession = {
-            date: new Date().toISOString(),
-            score,
-            level,
-            lines,
-            duration: Math.floor((Date.now() - gameStartTime.current) / 1000),
-        };
-
-        // Save session to localStorage
-        const sessions = JSON.parse(localStorage.getItem('tetrisSessions') || '[]');
-        sessions.push(gameSession);
-        localStorage.setItem('tetrisSessions', JSON.stringify(sessions.slice(-10))); // Keep last 10 sessions
 
         // Add visual effect to show game over
         const boardElement = document.querySelector('.grid-cols-10');
@@ -506,7 +508,7 @@ const TetrisGame = () => {
 
     // Add a function to share score
     const shareScore = () => {
-        if (navigator.share) {
+        if (typeof window !== 'undefined' && navigator.share) {
             navigator.share({
                 title: 'My Tetris Score',
                 text: `I scored ${score} points in Tetris! Can you beat that?`,
@@ -516,7 +518,7 @@ const TetrisGame = () => {
                     position: "bottom-right"
                 });
             });
-        } else {
+        } else if (typeof window !== 'undefined' && navigator.clipboard) {
             // Fallback for browsers that don't support Web Share API
             navigator.clipboard.writeText(`I scored ${score} points in Tetris! Can you beat that? Play at ${window.location.href}`);
             toast.success("Score copied to clipboard!", {
@@ -532,14 +534,17 @@ const TetrisGame = () => {
 
     // Load game stats from localStorage on component mount
     useEffect(() => {
-        const savedHighScore = localStorage.getItem('tetrisHighScore');
-        if (savedHighScore) {
-            setHighScore(parseInt(savedHighScore, 10));
-        }
+        // Only access localStorage in browser environment
+        if (typeof window !== 'undefined') {
+            const savedHighScore = localStorage.getItem('tetrisHighScore');
+            if (savedHighScore) {
+                setHighScore(parseInt(savedHighScore, 10));
+            }
 
-        const savedStats = localStorage.getItem('tetrisStats');
-        if (savedStats) {
-            setGameStats(JSON.parse(savedStats));
+            const savedStats = localStorage.getItem('tetrisStats');
+            if (savedStats) {
+                setGameStats(JSON.parse(savedStats));
+            }
         }
     }, []);
 
@@ -619,7 +624,9 @@ const TetrisGame = () => {
                 open={showStats}
                 onClose={() => setShowStats(false)}
                 gameStats={gameStats}
-                sessions={JSON.parse(localStorage.getItem('tetrisSessions') || '[]')}
+                sessions={typeof window !== 'undefined'
+                    ? JSON.parse(localStorage.getItem('tetrisSessions') || '[]')
+                    : []}
             />
         </div>
     );
