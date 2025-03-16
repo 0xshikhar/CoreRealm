@@ -228,8 +228,8 @@ export default function NFTProfilePage() {
 
     return (
         <div className="container max-w-4xl py-12">
-            <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                NFT Profile Portal
+            <h1 className="text-4xl font-bold text-center mb-8 text-white bg-clip-text text-transparent">
+                Mint your NFT Profile
             </h1>
 
             <Tabs defaultValue="create" value={activeTab} onValueChange={setActiveTab} className="mb-8">

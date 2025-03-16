@@ -67,8 +67,8 @@ export default function TokenMintPage() {
 
     return (
         <div className="container max-w-4xl py-2">
-            <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Token Minting Portal
+            <h1 className="text-4xl font-bold text-center mb-8 text-white bg-clip-text text-transparent">
+                Get your $Game token to play
             </h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

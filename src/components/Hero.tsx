@@ -48,18 +48,18 @@ const Hero = () => {
                     </div>
 
                     <h1 className="text-white text-[80px] font-Agda mb-[2.5rem]">
-                        Stream, Organize & Play Games on CoreDao Blockchain
+                        Play, Organize & Stream Games on CoreDao Blockchain
                     </h1>
 
                     <div className="flex space-x-5">
-                        <Link href="/explore">
+                        <Link href="/events">
                             <button className="flex items-center text-lg font-semibold px-12 py-4 bg-white text-black hover:bg-[#98ee2c] cursor-pointer">
                                 Explore <BsArrowRight className='ml-2 mt-1' />
                             </button>
                         </Link>
-                        <Link href="/nft">
+                        <Link href="/games">
                             <button className="flex items-center text-lg font-semibold px-12 py-4 bg-[#98ee2c] text-black hover:bg-[#f0f0f0] cursor-pointer">
-                                Create Stream <BsArrowRight className='ml-2 mt-1' />
+                                Play Games <BsArrowRight className='ml-2 mt-1' />
                             </button>
                         </Link>
                     </div>

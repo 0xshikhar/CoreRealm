@@ -8,6 +8,8 @@ import { CgProfile } from "react-icons/cg";
 import { MdOutlineAccountBalanceWallet } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import { AuthButton } from "@/components/AuthButton";
+import { FaFaucetDrip } from "react-icons/fa6";
+
 
 const Navbar = () => {
 	const router = useRouter();
@@ -54,12 +56,7 @@ const Navbar = () => {
 
 				{/* Desktop Menu Items - hidden on mobile */}
 				<div className="hidden md:flex items-center">
-					<div
-						className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
-						onClick={() => router.push("/explore")}
-					>
-						Explore
-					</div>
+
 					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
 						onClick={() => router.push("/games")}
 					>
@@ -74,12 +71,12 @@ const Navbar = () => {
 						className="font-bold flex items-center text-[#8a939b] px-4 hover:text-white cursor-pointer"
 						onClick={() => router.push("/nft")}
 					>
-						<CgProfile className="mr-2" /> NFTProfile
+						<CgProfile className="mr-2" /> Mint Profile
 					</div>
 					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold flex items-center"
 						onClick={() => router.push("/token")}
 					>
-						<MdOutlineAccountBalanceWallet className="mr-2" /> Token
+						<FaFaucetDrip className="text-2xl text-[#98ee2c]" />
 					</div>
 					<div className="px-4">
 						<AuthButton />
@@ -134,7 +131,7 @@ const Navbar = () => {
 					<div
 						className="text-[#c8cacd] hover:text-white cursor-pointer font-bold py-2"
 						onClick={() => {
-							router.push("/explore");
+							router.push("/events");
 							setIsMenuOpen(false);
 						}}
 					>
