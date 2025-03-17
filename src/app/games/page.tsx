@@ -106,7 +106,7 @@ const GamesPage = () => {
             {/* Hero Section - Updated with more modern design */}
             <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent z-10"></div>
-                <div className="absolute inset-0 bg-[url('/images/games-banner.png')] bg-cover bg-center"></div>
+                <div className="absolute inset-0 bg-[url('/puzzle.jpg')] bg-cover bg-center"></div>
                 <div className="container mx-auto px-4 py-20 relative z-20">
                     <div className="max-w-3xl">
                         <h1 className="text-white font-Agda text-5xl md:text-7xl uppercase mb-4 leading-tight">

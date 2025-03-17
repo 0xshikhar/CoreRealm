@@ -13,7 +13,6 @@ export const blockExplorer = {
     tokenMint: "https://scan.test2.btcs.network/address/0xcd34A2d8fFC72E3d587cfAEe3d1B0BdB11859501",
 };
 
-// https://scan.test2.btcs.network/address/0x419cFe85e77a0A26B9989059057318F59764F7C5
 export const contractABIs = {
     nft: nftABI,
     tokenMint: tokenMintABI,

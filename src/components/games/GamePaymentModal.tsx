@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useGameAccess } from "@/hooks/useGameAccess"
+import { recordGamePayment } from "@/lib/services/game-service"
+import { contractAddresses } from "@/lib/contracts"
 
 interface GamePaymentModalProps {
     isOpen: boolean
@@ -18,7 +20,7 @@ interface GamePaymentModalProps {
 }
 
 // Token contract address from the prompt
-const TOKEN_CONTRACT_ADDRESS = "0x419cFe85e77a0A26B9989059057318F59764F7C5"
+const TOKEN_CONTRACT_ADDRESS = contractAddresses.tokenMint as `0x${string}`
 // ERC20 transfer function signature
 const ERC20_ABI = [
     {
@@ -82,12 +84,24 @@ export function GamePaymentModal({ isOpen, onClose, gamePath, gameName }: GamePa
     // Redirect to game page after successful payment
     useEffect(() => {
         if (isConfirmed && !redirecting) {
+            // Record the transaction
+            if (address) {
+                recordGamePayment({
+                    gameId: gameId,
+                    txHash: hash || "",
+                    amount: 1,
+                    address: address,
+                }).catch(err => {
+                    console.error("Failed to record payment:", err)
+                })
+            }
+
             setGameAccess()
             setRedirecting(true)
             router.push(gamePath)
             onClose()
         }
-    }, [isConfirmed, redirecting, setGameAccess, router, gamePath, onClose])
+    }, [isConfirmed, redirecting, setGameAccess, router, gamePath, onClose, hash, gameId, address])
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

@@ -7,8 +7,9 @@ import { AiOutlineSearch, AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import { CgProfile } from "react-icons/cg";
 import { MdOutlineAccountBalanceWallet } from "react-icons/md";
 import { cn } from "@/lib/utils";
-import { AuthButton } from "@/components/AuthButton";
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { FaFaucetDrip } from "react-icons/fa6";
+import { User } from "lucide-react";
 
 
 const Navbar = () => {
@@ -57,30 +58,40 @@ const Navbar = () => {
 				{/* Desktop Menu Items - hidden on mobile */}
 				<div className="hidden md:flex items-center">
 
-					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-2 font-bold"
 						onClick={() => router.push("/games")}
 					>
 						Games
 					</div>
-					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold"
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-2 font-bold"
 						onClick={() => router.push("/events")}
 					>
 						Events
 					</div>
 					<div
-						className="font-bold flex items-center text-[#8a939b] px-4 hover:text-white cursor-pointer"
+						className="font-bold flex items-center text-[#8a939b] px-2 hover:text-white cursor-pointer"
 						onClick={() => router.push("/nft")}
 					>
-						<CgProfile className="mr-2" /> Mint Profile
+						Mint Profile
 					</div>
-					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold flex items-center"
+					<div className="px-1">
+						<Link
+							href="/profile"
+							className="text-[#c8cacd] hover:text-white cursor-pointer px-4 font-bold flex items-center"
+						>
+							<User className="text-3xl bg-white text-black text-bold rounded-full p-1" />
+						</Link>
+					</div>
+
+					<div className="text-[#c8cacd] hover:text-white cursor-pointer px-1 font-bold flex items-center"
 						onClick={() => router.push("/token")}
 					>
 						<FaFaucetDrip className="text-2xl text-[#98ee2c]" />
 					</div>
 					<div className="px-4">
-						<AuthButton />
+						<ConnectButton />
 					</div>
+
 				</div>
 
 				{/* Mobile Menu Button - visible only on mobile */}
@@ -150,7 +161,7 @@ const Navbar = () => {
 						<MdOutlineAccountBalanceWallet className="mr-2" /> Wallet
 					</div>
 					<div className="py-2">
-						<AuthButton />
+						<ConnectButton />
 					</div>
 				</div>
 			</div>

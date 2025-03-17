@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateJwtToken } from '@/lib/auth';
 import { SiweMessage } from 'siwe';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {

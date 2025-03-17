@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db';
 
 // Simple in-memory cache to prevent duplicate checks
 const recentChecks: Record<string, number> = {};

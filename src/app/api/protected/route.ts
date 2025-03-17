@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/getAuthUser';
-import { prisma } from '@/lib/prisma'; // Assuming you have a Prisma client setup
+import { prisma } from '@/lib/db'; // Assuming you have a Prisma client setup
 
 export async function GET(request: NextRequest) {
     const user = getAuthUser();
