@@ -8,7 +8,6 @@ import { parseUnits } from "viem"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { useGameAccess } from "@/hooks/useGameAccess"
 import { recordGamePayment } from "@/lib/services/game-service"
 import { contractAddresses } from "@/lib/contracts"
 
@@ -51,16 +50,6 @@ export function GamePaymentModal({ isOpen, onClose, gamePath, gameName }: GamePa
     })
 
     const gameId = gamePath.split('/').pop() || ""
-    const { hasAccess, setGameAccess } = useGameAccess(gameId)
-
-    // If user already has access, redirect them directly
-    useEffect(() => {
-        if (hasAccess && isOpen && !redirecting) {
-            setRedirecting(true)
-            router.push(gamePath)
-            onClose()
-        }
-    }, [hasAccess, isOpen, gamePath, onClose, router, redirecting])
 
     // Handle payment
     const handlePayment = async () => {
@@ -96,12 +85,11 @@ export function GamePaymentModal({ isOpen, onClose, gamePath, gameName }: GamePa
                 })
             }
 
-            setGameAccess()
             setRedirecting(true)
             router.push(gamePath)
             onClose()
         }
-    }, [isConfirmed, redirecting, setGameAccess, router, gamePath, onClose, hash, gameId, address])
+    }, [isConfirmed, redirecting, router, gamePath, onClose, hash, gameId, address])
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -109,7 +97,7 @@ export function GamePaymentModal({ isOpen, onClose, gamePath, gameName }: GamePa
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-white">Play {gameName}</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        To access this game, pay a fee of 1 token for every play.
+                        To play this game, you need to pay 1 REALM token for each play session.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -117,9 +105,12 @@ export function GamePaymentModal({ isOpen, onClose, gamePath, gameName }: GamePa
                     <div className="bg-[#151515] p-4 rounded-md">
                         <p className="text-sm text-gray-400 mb-2">Payment details:</p>
                         <div className="flex justify-between">
-                            <span>Game access fee</span>
+                            <span>Game play fee</span>
                             <span className="font-semibold">1 REALM Token</span>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2 italic">
+                            Note: Each play session requires a separate payment
+                        </p>
                     </div>
 
                     {error && (

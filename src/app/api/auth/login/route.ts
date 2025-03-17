@@ -39,10 +39,9 @@ export async function POST(request: NextRequest) {
     // Find or create user in database
     const user = await prisma.user.upsert({
       where: { walletAddress: walletAddress.toLowerCase() },
-      update: { lastLoginAt: new Date() },
+      update: {},
       create: {
         walletAddress: walletAddress.toLowerCase(),
-        lastLoginAt: new Date(),
       },
     });
 
@@ -64,7 +63,6 @@ export async function POST(request: NextRequest) {
         walletAddress: user.walletAddress,
         username: user.username,
         createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
         avatar: user.avatar,
         bio: user.bio,
         NFTid: user.NFTid

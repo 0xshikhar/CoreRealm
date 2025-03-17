@@ -1,3 +1,5 @@
+import { createPublicClient, http } from 'viem';
+
 
 export const agentChain = ({
     id: 1114,
@@ -19,3 +21,10 @@ export const agentChain = ({
     },
     testnet: true,
 });
+
+const publicClient = createPublicClient({
+    chain: agentChain,
+    transport: http(),
+});
+
+export default publicClient;

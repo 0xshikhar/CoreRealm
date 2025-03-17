@@ -19,7 +19,6 @@ import {
     useWriteContract,
     useWaitForTransactionReceipt
 } from "wagmi";
-import { encode, decode } from 'viem';
 import { ethers } from 'ethers';
 
 // Define interface for component props
@@ -70,7 +69,6 @@ const GameOverDialog: React.FC<GameOverDialogProps> = ({
         isError: isReceiptError
     } = useWaitForTransactionReceipt({
         hash: txHash as `0x${string}`,
-        enabled: !!txHash,
     });
 
     // Function to mint the NFT
@@ -223,7 +221,7 @@ const GameOverDialog: React.FC<GameOverDialogProps> = ({
                                 rel="noopener noreferrer"
                                 className="text-sm text-blue-600 dark:text-blue-400 underline mt-1 inline-block"
                             >
-                                View on Etherscan
+                                View on Core Testnet Explorer
                             </a>
                         )}
                     </div>

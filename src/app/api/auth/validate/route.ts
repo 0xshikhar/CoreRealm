@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
                 walletAddress: true,
                 username: true,
                 createdAt: true,
-                lastLoginAt: true,
             }
         });
 

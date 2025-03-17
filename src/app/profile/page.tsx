@@ -51,6 +51,13 @@ interface GameStat {
         score: number
         achievedAt: string
     }>
+    transactionTimes: string[]
+}
+
+interface GameActivity {
+    name: string;
+    playCount: number;
+    transactions: Transaction[];
 }
 
 export default function ProfilePage() {
@@ -86,7 +93,7 @@ export default function ProfilePage() {
                 const signature = await signMessageAsync({ message })
 
                 // Verify the signature
-                const isValid = verifySignature(message, signature, address)
+                const isValid = await verifySignature(message, signature, address)
 
                 if (isValid) {
                     setIsAuthenticated(true)
@@ -101,7 +108,7 @@ export default function ProfilePage() {
         }
 
         authenticateWallet()
-    }, [address, isConnected, signMessageAsync])
+    }, [address, isConnected, signMessageAsync, fetchProfileData])
 
     async function fetchProfileData() {
         if (!isConnected || !address) return
@@ -138,6 +145,9 @@ export default function ProfilePage() {
             setIsLoading(false)
         }
     }
+
+    const gamesPlayedCount = transactions.filter(tx => tx.type === "GAME_PAYMENT").length;
+
 
     if (isLoading) {
         return (
@@ -221,7 +231,7 @@ export default function ProfilePage() {
                                     <div className="bg-[#151515] p-3 rounded-md">
                                         <p className="text-xs text-gray-400">Games Played</p>
                                         <p className="font-medium">
-                                            {gameStats.reduce((total, game) => total + game.playCount, 0)}
+                                            {gamesPlayedCount}
                                         </p>
                                     </div>
                                 </div>
@@ -260,16 +270,78 @@ export default function ProfilePage() {
                                 </CardHeader>
                                 <CardContent>
                                     {gameStats.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <Gamepad className="h-12 w-12 mx-auto text-gray-500 mb-4" />
-                                            <h3 className="text-lg font-medium text-white mb-2">No Games Played Yet</h3>
-                                            <p className="text-gray-400 mb-4">Start playing to see your stats here</p>
-                                            <Link
-                                                href="/games"
-                                                className="bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
-                                            >
-                                                Browse Games
-                                            </Link>
+                                        <div>
+                                            {transactions.filter(tx => tx.type === "GAME_PAYMENT").length > 0 ? (
+                                                <div className="space-y-6">
+                                                    <h3 className="text-lg font-medium text-white mb-4">Your Game Activity</h3>
+                                                    {transactions
+                                                        .filter(tx => tx.type === "GAME_PAYMENT")
+                                                        .reduce<GameActivity[]>((games, tx) => {
+                                                            // Extract game name from description (assuming format like "Payment for Game: Chess")
+                                                            const gameName = tx.description.includes("Game:")
+                                                                ? tx.description.split("Game:")[1].trim()
+                                                                : tx.description;
+
+                                                            // Format the display name to be more user-friendly
+                                                            const displayName = gameName.replace(/^Payment for playing game: /i, "Played Game: ");
+
+                                                            // Check if game already exists in our array
+                                                            const existingGame = games.find(g => g.name === displayName);
+
+                                                            if (existingGame) {
+                                                                existingGame.playCount++;
+                                                                existingGame.transactions.push(tx);
+                                                            } else {
+                                                                games.push({
+                                                                    name: displayName,
+                                                                    playCount: 1,
+                                                                    transactions: [tx]
+                                                                });
+                                                            }
+
+                                                            return games;
+                                                        }, [])
+                                                        .map((game, index) => (
+                                                            <div key={index} className="bg-[#151515] rounded-lg p-4">
+                                                                <div className="flex items-center mb-4">
+                                                                    <div className="relative w-16 h-16 rounded-md overflow-hidden mr-4 bg-gray-800 flex items-center justify-center">
+                                                                        <Gamepad className="h-8 w-8 text-gray-500" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h3 className="text-lg font-bold">{game.name}</h3>
+                                                                        <div className="flex items-center text-sm text-gray-400">
+                                                                            <span className="mr-3">Played: {game?.playCount || 0} times</span>
+                                                                            <span>
+                                                                                Last played: {new Date(game.transactions[game.transactions.length - 1].createdAt).toLocaleString()}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="ml-auto">
+                                                                        <Link
+                                                                            href="/games"
+                                                                            className="bg-[#98ee2c] text-black px-3 py-1 rounded text-sm font-bold hover:bg-[#7bc922] transition-colors"
+                                                                        >
+                                                                            Find Games
+                                                                        </Link>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8">
+                                                    <Gamepad className="h-12 w-12 mx-auto text-gray-500 mb-4" />
+                                                    <h3 className="text-lg font-medium text-white mb-2">No Games Played Yet</h3>
+                                                    <p className="text-gray-400 mb-4">Start playing to see your stats here</p>
+                                                    <Link
+                                                        href="/games"
+                                                        className="bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
+                                                    >
+                                                        Browse Games
+                                                    </Link>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="space-y-6">
@@ -288,9 +360,9 @@ export default function ProfilePage() {
                                                             <h3 className="text-lg font-bold">{stat.game.name}</h3>
                                                             <div className="flex items-center text-sm text-gray-400">
                                                                 <span className="mr-3">Played: {stat.playCount} times</span>
-                                                                {stat.lastPlayed && (
+                                                                {stat.transactionTimes.length > 0 && (
                                                                     <span>
-                                                                        Last played: {formatDistanceToNow(new Date(stat.lastPlayed), { addSuffix: true })}
+                                                                        Last played: {new Date(stat.transactionTimes[stat.transactionTimes.length - 1]).toLocaleString()}
                                                                     </span>
                                                                 )}
                                                             </div>
