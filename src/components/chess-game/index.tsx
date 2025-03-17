@@ -44,6 +44,7 @@ import { ChessTimer, EvaluationBar, SettingsDialog, GameSettings, PromotionDialo
 import { toast } from 'sonner';
 import MoveHistoryDisplay from './MoveHistoryDisplay';
 import GameStatusDisplay from './GameStatusDisplay';
+import GameOverDialog from './GameOverDialog';
 
 // Define types for timer refs
 type TimerRef = ReturnType<typeof setInterval> | null;
@@ -78,6 +79,7 @@ interface ChessGameAppState {
     analysisMode: boolean;
     hintMove: Move | null;
     showGameOverModal: boolean;
+    opponent: string;
 }
 
 // 1. MAIN GAME COMPONENT
@@ -104,6 +106,7 @@ const ChessGameApp: React.FC = () => {
     const [analysisMode, setAnalysisMode] = useState<boolean>(false);
     const [boardSize, setBoardSize] = useState<number>(480);
     const [isDarkTheme, setIsDarkTheme] = useState<boolean>(false);
+    const [opponent, setOpponent] = useState<string>("0x043Bb2629766bB4375c8EC3d0CbbfA77bC7e7BC9"); // AI wallet address
 
     // Calculate material advantage and captured pieces
     const [materialAdvantage, setMaterialAdvantage] = useState<number>(0);
@@ -242,6 +245,80 @@ const ChessGameApp: React.FC = () => {
         }
     };
 
+    // Add a function to check if the game is over and show the appropriate modal
+    const checkGameOver = useCallback(() => {
+
+        // Check if there are any legal moves
+        const legalMoves = game.moves({ verbose: true });
+
+        if (legalMoves.length === 0) {
+            console.log("GAME OVER: No legal moves available");
+
+            setGameOver(true);
+            setIsTimerRunning(false);
+
+            // Determine the reason for game over
+            if (game.isCheckmate()) {
+                const winner = game.turn() === 'w' ? 'b' : 'w';
+                setGameStatus({
+                    winner: winner,
+                    reason: 'checkmate'
+                });
+                setResult(`Checkmate! ${winner === 'w' ? 'White' : 'Black'} wins.`);
+                console.log(`Checkmate! ${winner === 'w' ? 'White' : 'Black'} wins.`);
+            } else if (game.isDraw()) {
+                if (game.isStalemate()) {
+                    setGameStatus({ winner: null, reason: 'stalemate' });
+                    setResult('Draw by stalemate');
+                    console.log('Draw by stalemate');
+                } else if (game.isThreefoldRepetition()) {
+                    setGameStatus({ winner: null, reason: 'threefold' });
+                    setResult('Draw by threefold repetition');
+                    console.log('Draw by threefold repetition');
+                } else if (game.isInsufficientMaterial()) {
+                    setGameStatus({ winner: null, reason: 'insufficient' });
+                    setResult('Draw by insufficient material');
+                    console.log('Draw by insufficient material');
+                } else {
+                    setGameStatus({ winner: null, reason: 'fifty-move' });
+                    setResult('Draw by fifty-move rule');
+                    console.log('Draw by fifty-move rule');
+                }
+            } else {
+                // This should not happen, but just in case
+                setGameStatus({ winner: null, reason: null });
+                setResult('Game over');
+                console.log('Game over for unknown reason');
+            }
+
+            // Show the game over modal
+            setTimeout(() => {
+                setShowGameOverModal(true);
+                console.log("Game over modal should be showing now:", {
+                    gameOver: true,
+                    result,
+                    gameStatus,
+                    showGameOverModal: true
+                });
+
+                // Also show a toast notification
+                if (gameStatus.winner) {
+                    const isPlayerWinner = gameStatus.winner === playerColor;
+                    toast[isPlayerWinner ? 'success' : 'error'](
+                        isPlayerWinner ? 'Victory!' : 'Defeat!',
+                        { description: result }
+                    );
+                } else {
+                    toast.info('Draw!', { description: result });
+                }
+            }, 500);
+
+            return true;
+        }
+
+        return false;
+    }, [game, playerColor, result, gameStatus]);
+
     // Update game state after a move
     const updateGameState = () => {
         // Update FEN
@@ -251,41 +328,13 @@ const ChessGameApp: React.FC = () => {
         const history = game.history({ verbose: true });
         console.log("Current move history:", history);
 
-        // Only update if history has changed
-        if (JSON.stringify(moveHistory) !== JSON.stringify(history)) {
-            setMoveHistory(history);
-        }
+        // Always update move history to ensure it's current
+        setMoveHistory(history);
 
-        // Check for game over conditions
-        if (game.isGameOver()) {
-            setGameOver(true);
-            setIsTimerRunning(false); // Stop timer when game is over
-
-            if (game.isCheckmate()) {
-                const winner = game.turn() === 'w' ? 'b' : 'w';
-                setGameStatus({
-                    winner: winner,
-                    reason: 'checkmate'
-                });
-                setResult(`Checkmate! ${winner === 'w' ? 'White' : 'Black'} wins.`);
-            } else if (game.isDraw()) {
-                if (game.isStalemate()) {
-                    setGameStatus({ winner: null, reason: 'stalemate' });
-                    setResult('Draw by stalemate');
-                } else if (game.isThreefoldRepetition()) {
-                    setGameStatus({ winner: null, reason: 'threefold' });
-                    setResult('Draw by threefold repetition');
-                } else if (game.isInsufficientMaterial()) {
-                    setGameStatus({ winner: null, reason: 'insufficient' });
-                    setResult('Draw by insufficient material');
-                } else {
-                    setGameStatus({ winner: null, reason: 'fifty-move' });
-                    setResult('Draw by fifty-move rule');
-                }
-            }
-
-            // Show result dialog
-            setShowGameOverModal(true);
+        // Check for game over conditions using our new function
+        if (checkGameOver()) {
+            console.log("Game is over, state updated");
+            return; // Exit early since we've handled the game over state
         } else if (game.isCheck()) {
             // Play check sound and show notification
             if (settings.soundEnabled && checkAudioRef.current) {
@@ -461,30 +510,6 @@ const ChessGameApp: React.FC = () => {
     const makeMove = (move: { from: Square; to: Square; promotion?: string }) => {
         if (gameOver || thinking) return false;
 
-        // // Handle pawn promotion
-        // if (
-        //     move.promotion === undefined &&
-        //     !settings.autoQueen &&
-        //     move.piece === 'p' &&
-        //     ((move.color === 'w' && move.to[1] === '8') ||
-        //         (move.color === 'b' && move.to[1] === '1'))
-        // ) {
-        //     setPendingMove(move);
-        //     setShowPromotionDialog(true);
-        //     return false;
-        // }
-
-        // // If auto-queen is enabled, automatically promote to queen
-        // if (
-        //     move.promotion === undefined &&
-        //     settings.autoQueen &&
-        //     (move.piece === 'p') &&
-        //     ((move.color === 'w' && move.to[1] === '8') ||
-        //         (move.color === 'b' && move.to[1] === '1'))
-        // ) {
-        //     move.promotion = 'q';
-        // }
-
         try {
             // Attempt to make the move
             const result = game.move(move);
@@ -514,6 +539,9 @@ const ChessGameApp: React.FC = () => {
                 // Update FEN
                 setFen(game.fen());
 
+                // Call updateGameState to check for game over, etc.
+                updateGameState();
+
                 return true;
             }
             return false;
@@ -542,76 +570,69 @@ const ChessGameApp: React.FC = () => {
         return result;
     };
 
-    // Modify the makeAiMove function to properly log AI moves
+    // Modify the makeAiMove function to properly handle game over
     const makeAiMove = () => {
+        if (gameOver || thinking) return;
+
         setThinking(true);
 
         // Simulate AI thinking time based on difficulty
-        const thinkingTime = 500 + (aiLevel * 300) + Math.random() * 500;
-
-        // Get difficulty level name for logging
-        const difficultyName = aiLevel === 1 ? 'Easy' : aiLevel === 2 ? 'Medium' : 'Hard';
+        const thinkingTime = 500 + (aiLevel * 300);
 
         setTimeout(() => {
-            // Get legal moves
-            const moves = game.moves({ verbose: true });
+            try {
+                // Get all legal moves
+                const moves = game.moves({ verbose: true });
 
-            if (moves.length > 0) {
-                let move;
-                let moveEvaluation = 0;
+                if (moves.length === 0) {
+                    console.log("No legal moves available for AI - GAME OVER");
+                    setThinking(false);
 
-                if (aiLevel === 1) {
-                    // Easy: Completely random move
-                    move = moves[Math.floor(Math.random() * moves.length)];
-                    moveEvaluation = Math.floor(Math.random() * 100) - 50; // Random evaluation
-                } else if (aiLevel === 2) {
-                    // Medium: Slightly better than random
-                    const capturingMoves = moves.filter(m => m.captured);
-                    const checkingMoves = moves.filter(m => {
-                        const gameCopy = new Chess(game.fen());
-                        gameCopy.move(m);
-                        return gameCopy.isCheck();
-                    });
-
-                    if (checkingMoves.length > 0 && Math.random() > 0.3) {
-                        move = checkingMoves[Math.floor(Math.random() * checkingMoves.length)];
-                        moveEvaluation = 50 + Math.floor(Math.random() * 50); // Good evaluation
-                    } else if (capturingMoves.length > 0 && Math.random() > 0.3) {
-                        move = capturingMoves[Math.floor(Math.random() * capturingMoves.length)];
-                        moveEvaluation = 20 + Math.floor(Math.random() * 40); // Decent evaluation
-                    } else {
-                        move = moves[Math.floor(Math.random() * moves.length)];
-                        moveEvaluation = Math.floor(Math.random() * 60) - 30; // Random evaluation
-                    }
-                } else {
-                    // Hard: Use minimax with deeper search
-                    move = findBestMove(game, moves, 3);
-                    moveEvaluation = 70 + Math.floor(Math.random() * 30); // Strong evaluation
+                    // Explicitly check game over conditions
+                    checkGameOver();
+                    return;
                 }
 
-                // Log the AI move
-                console.log(`AI (${difficultyName}) played: ${move.san}`, {
-                    from: move.from,
-                    to: move.to,
-                    piece: move.piece,
-                    captured: move.captured,
-                    evaluation: moveEvaluation
-                });
-
-                // Show a toast notification for the AI move
-                toast.success(`AI Move (${difficultyName})`, {
-                    description: `${move.san}${move.captured ? ` captures ${move.captured}` : ''}`,
-                    duration: 3000,
-                });
-
-                // Update evaluation for display
-                setEvaluation(moveEvaluation * (playerColor === 'w' ? -1 : 1));
+                // Find the best move based on AI level
+                const bestMove = findBestMove(game, moves, aiLevel);
 
                 // Make the move
-                makeMove(move);
-            }
+                const result = game.move({
+                    from: bestMove.from,
+                    to: bestMove.to,
+                    promotion: bestMove.promotion
+                });
 
-            setThinking(false);
+                // Play sound
+                if (settings.soundEnabled) {
+                    if (bestMove.captured) {
+                        captureAudioRef.current?.play().catch(() => { });
+                    } else {
+                        moveAudioRef.current?.play().catch(() => { });
+                    }
+                }
+
+                // Get the full history directly from the game object
+                const fullHistory = game.history({ verbose: true });
+                console.log("AI move made, history:", fullHistory);
+
+                // Update the move history state
+                setMoveHistory(fullHistory);
+
+                // Update FEN
+                setFen(game.fen());
+
+                // Log the AI move
+                logAIMove(bestMove, evaluation, `Level ${aiLevel}`);
+
+                // Check if the game is over after AI move
+                checkGameOver();
+
+            } catch (error) {
+                console.error("Error making AI move:", error);
+            } finally {
+                setThinking(false);
+            }
         }, thinkingTime);
     };
 
@@ -738,7 +759,14 @@ const ChessGameApp: React.FC = () => {
             promotion: promotionPiece
         };
 
-        return makeMove(move);
+        const moveResult = makeMove(move);
+
+        // Check for game over after player's move
+        if (moveResult) {
+            checkGameOver();
+        }
+
+        return moveResult;
     };
 
     // Undo the last two moves (player's move and AI's response)
@@ -1196,46 +1224,20 @@ const ChessGameApp: React.FC = () => {
             <audio ref={captureAudioRef} src="/sounds/capture.mp3" preload="auto" />
             <audio ref={checkAudioRef} src="/sounds/check.mp3" preload="auto" />
 
-            {/* Game over modal */}
-            <Dialog open={showGameOverModal} onOpenChange={setShowGameOverModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center justify-center text-2xl gap-2">
-                            {gameStatus.winner ? (
-                                <>
-                                    <Trophy className="h-6 w-6 text-yellow-500" />
-                                    {gameStatus.winner === playerColor ? "Victory!" : "Defeat!"}
-                                </>
-                            ) : (
-                                <>
-                                    <Handshake className="h-6 w-6" />
-                                    Draw!
-                                </>
-                            )}
-                        </DialogTitle>
-                        <DialogDescription className="text-center text-base">
-                            {result}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="flex justify-center my-4">
-                        <div className="w-64 h-64">
-                            <Chessboard
-                                position={fen}
-                                boardOrientation={settings.orientation}
-                                arePiecesDraggable={false}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between">
-                        <DialogClose asChild>
-                            <Button variant="outline">Review Game</Button>
-                        </DialogClose>
-                        <Button onClick={resetGame}>New Game</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            {/* Game over modal - Enhanced version */}
+            <GameOverDialog
+                showGameOverModal={showGameOverModal}
+                setShowGameOverModal={setShowGameOverModal}
+                gameStatus={gameStatus}
+                playerColor={playerColor}
+                result={result}
+                fen={fen}
+                settings={settings}
+                resetGame={resetGame}
+                moves={moveHistory.map(move => move.san).join(' ')} // Convert moves to PGN format
+                opponent={opponent} // AI's wallet address
+                moveCount={moveHistory.length}
+            />
 
             {/* Promotion selection dialog */}
             <Dialog open={showPromotionDialog} onOpenChange={setShowPromotionDialog}>
