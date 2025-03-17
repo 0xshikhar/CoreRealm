@@ -21,8 +21,8 @@ const Navbar = () => {
 	};
 
 	return (
-		<nav className="bg-black w-full px-4 py-3 sticky top-0 z-50">
-			<div className="max-w-7xl mx-auto flex items-center justify-between">
+		<div className="bg-black w-full px-4 py-3 sticky top-0 z-50">
+			<div className="mx-4 flex items-center justify-between">
 				{/* Logo */}
 				<Link href="/" className="flex items-center">
 					<div className="text-[28px] md:text-[32px] text-white font-serif">
@@ -154,7 +154,7 @@ const Navbar = () => {
 					</div>
 				</div>
 			</div>
-		</nav>
+		</div>
 	);
 };
 

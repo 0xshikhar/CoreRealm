@@ -22,7 +22,6 @@ import {
 import 'dotenv/config'
 
 import {
-    mainnet,
     sepolia
 } from 'wagmi/chains';
 import { agentChain } from '@/lib/customChain';
@@ -32,9 +31,9 @@ const projectId = '9811958bd307518b364ff7178034c435';
 
 
 const config = getDefaultConfig({
-    appName: 'My RainbowKit App',
+    appName: 'Core Realm',
     projectId: projectId,
-    chains: [mainnet, sepolia, agentChain],
+    chains: [agentChain, sepolia],
     ssr: true, // If your dApp uses server side rendering (SSR)
 });
 

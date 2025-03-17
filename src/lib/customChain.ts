@@ -1,21 +1,21 @@
 
 export const agentChain = ({
-    id: 1313161584,
-    name: 'The Agent Chain',
+    id: 1114,
+    name: 'Core Blockchain Testnet',
     nativeCurrency: {
         decimals: 18,
-        name: 'Ether',
-        symbol: 'ETH',
+        name: 'tCORE2',
+        symbol: 'tCore',
     },
     rpcUrls: {
-        default: { http: ['https://rpc-0x4e454170.aurora-cloud.dev'] },
+        default: { http: ['https://rpc.test2.btcs.network'] },
     },
     blockExplorers: {
         default: {
             name: 'Agent Chain Explorer',
-            url: 'https://explorer.0x4e454170.aurora-cloud.dev',
-            apiUrl: 'https://explorer.0x4e454170.aurora-cloud.dev/api',
+            url: 'https://scan.test2.btcs.network/',
+            apiUrl: 'https://scan.test2.btcs.network/api',
         },
     },
-    testnet: false,
+    testnet: true,
 });
