@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAccount, useBalance, useSignMessage } from "wagmi"
+import { useState, useEffect, useCallback } from "react"
+import { useAccount, useBalance } from "wagmi"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,7 +12,7 @@ import { Loader2, Trophy, History, Wallet, Gamepad, Calendar } from "lucide-reac
 import Link from "next/link"
 import Image from "next/image"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { generateNonce, verifySignature } from "@/lib/auth-utils"
+import { useAuth } from "@/hooks/useAuth"
 import { GameScoreCard } from "@/components/profile/GameScoreCard"
 import { contractAddresses } from "@/lib/contracts"
 
@@ -62,13 +62,12 @@ interface GameActivity {
 
 export default function ProfilePage() {
     const { address, isConnected } = useAccount()
-    const { signMessageAsync } = useSignMessage()
+    const { isAuthenticated, isLoading: isAuthLoading, login } = useAuth()
 
     const [profile, setProfile] = useState<UserProfile | null>(null)
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [gameStats, setGameStats] = useState<GameStat[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
 
     // Get REALM token balance
     const { data: tokenBalance, isLoading: isBalanceLoading } = useBalance({
@@ -78,39 +77,13 @@ export default function ProfilePage() {
 
     // Handle wallet authentication
     useEffect(() => {
-        async function authenticateWallet() {
-            if (!isConnected || !address) {
-                setIsAuthenticated(false)
-                return
-            }
-
-            try {
-                // Generate a nonce for the user to sign
-                const nonce = generateNonce()
-
-                // Ask user to sign the message
-                const message = `Sign this message to authenticate with CoreRealm: ${nonce}`
-                const signature = await signMessageAsync({ message })
-
-                // Verify the signature
-                const isValid = await verifySignature(message, signature, address)
-
-                if (isValid) {
-                    setIsAuthenticated(true)
-                    fetchProfileData()
-                } else {
-                    setIsAuthenticated(false)
-                }
-            } catch (error) {
-                console.error("Authentication failed:", error)
-                setIsAuthenticated(false)
-            }
+        if (isConnected && address && isAuthenticated) {
+            fetchProfileData()
         }
+    }, [isConnected, address, isAuthenticated])
 
-        authenticateWallet()
-    }, [address, isConnected, signMessageAsync, fetchProfileData])
-
-    async function fetchProfileData() {
+    // Define fetchProfileData as a useCallback to avoid dependency issues
+    const fetchProfileData = useCallback(async () => {
         if (!isConnected || !address) return
 
         try {
@@ -144,12 +117,20 @@ export default function ProfilePage() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [address, isConnected])
 
     const gamesPlayedCount = transactions.filter(tx => tx.type === "GAME_PAYMENT").length;
 
+    // Add a manual login handler for the connect button
+    const handleManualLogin = async () => {
+        try {
+            await login()
+        } catch (error) {
+            console.error("Manual login failed:", error)
+        }
+    }
 
-    if (isLoading) {
+    if (isLoading || isAuthLoading) {
         return (
             <div className="container mx-auto py-10 px-4">
                 <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -167,6 +148,23 @@ export default function ProfilePage() {
                     <h1 className="text-3xl font-bold text-white mb-4">Connect Your Wallet</h1>
                     <p className="text-gray-400 mb-6">Please connect your wallet to view your profile</p>
                     <ConnectButton />
+                </div>
+            </div>
+        )
+    }
+
+    if (isConnected && !isAuthenticated) {
+        return (
+            <div className="container mx-auto py-10 px-4">
+                <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                    <h1 className="text-3xl font-bold text-white mb-4">Authentication Required</h1>
+                    <p className="text-gray-400 mb-6">Please sign a message to authenticate your wallet</p>
+                    <button
+                        onClick={handleManualLogin}
+                        className="bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
+                    >
+                        Sign In
+                    </button>
                 </div>
             </div>
         )

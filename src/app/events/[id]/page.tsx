@@ -1,12 +1,11 @@
 import React from "react";
-import { BroadcastLoad, BroadcastPlayer } from "@/components/stream/BroadcastLoad";
+import { PlayerWithControls } from "@/components/stream/StreamPlayer";
 import { Src } from "@livepeer/react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BsArrowLeft } from "react-icons/bs";
 import { BiChat, BiHeart, BiShare } from "react-icons/bi";
 
-// Mock data for events - in a real app, this would come from a database
 const events = [
     {
         id: "1",
@@ -43,6 +42,7 @@ const events = [
     }
 ];
 
+
 export default function EventPage({ params }: { params: { id: string } }) {
     const event = events.find(e => e.id === params.id);
 
@@ -51,11 +51,10 @@ export default function EventPage({ params }: { params: { id: string } }) {
     }
 
     // Create source for the player
-    // 
     const src: Src[] = [
-        // @ts-ignore
         {
-            type: "hls",
+            // @ts-ignore
+            type: "playback",
             src: event.playbackId,
         }
     ];
@@ -77,7 +76,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
                 <div className="lg:col-span-2">
                     <div className="bg-[#151515] rounded-lg overflow-hidden">
                         <div className="aspect-video">
-                            <BroadcastPlayer src={src} />
+                            <PlayerWithControls src={src} />
                         </div>
 
                         <div className="p-4">
@@ -117,6 +116,41 @@ export default function EventPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div className="flex-grow overflow-y-auto mb-4 bg-[#0c0c0c] rounded-md p-3">
+                        {/* Chat messages would go here */}
+                        <div className="space-y-4">
+                            <div className="flex items-start gap-2">
+                                <div className="w-8 h-8 rounded-full bg-[#98ee2c] flex items-center justify-center text-black font-bold">M</div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-white">MantaGamer</span>
+                                        <span className="text-xs text-gray-400">5:42 PM</span>
+                                    </div>
+                                    <p className="text-gray-300">This stream is amazing! Can&apos;t wait to see the new features.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-2">
+                                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">C</div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-white">CryptoPlayer</span>
+                                        <span className="text-xs text-gray-400">5:43 PM</span>
+                                    </div>
+                                    <p className="text-gray-300">How do I get the new skins? Are they available now?</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-2">
+                                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">U</div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-white">UmiLover</span>
+                                        <span className="text-xs text-gray-400">5:45 PM</span>
+                                    </div>
+                                    <p className="text-gray-300">The graphics look so much better in this update!</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-auto">
@@ -135,4 +169,4 @@ export default function EventPage({ params }: { params: { id: string } }) {
             </div>
         </div>
     );
-} 
+}

@@ -21,6 +21,10 @@ export function useAuth() {
     // Use a ref to track if a check or login is in progress
     const isProcessingRef = useRef(false);
 
+    // Add a ref to track sign-in attempts to limit them
+    const signInAttemptsRef = useRef(0);
+    const MAX_SIGN_IN_ATTEMPTS = 2;
+
     // Add a timeout to reset the processing state if it gets stuck
     const resetProcessingState = () => {
         isProcessingRef.current = false;
@@ -49,6 +53,7 @@ export function useAuth() {
             // If no address, reset state
             if (!address) {
                 setHasCheckedExistingUser(false);
+                signInAttemptsRef.current = 0;
                 return;
             }
 
@@ -125,6 +130,12 @@ export function useAuth() {
             return;
         }
 
+        // Check if we've exceeded the maximum sign-in attempts
+        if (signInAttemptsRef.current >= MAX_SIGN_IN_ATTEMPTS) {
+            console.log(`Exceeded maximum sign-in attempts (${MAX_SIGN_IN_ATTEMPTS}), skipping auto-sign in`);
+            return;
+        }
+
         try {
             console.log(`Checking if user exists for address: ${walletAddress}`);
 
@@ -146,6 +157,8 @@ export function useAuth() {
                 isProcessingRef.current = false;
 
                 try {
+                    // Increment sign-in attempts counter
+                    signInAttemptsRef.current += 1;
                     await login();
                 } finally {
                     setIsAutoSigningIn(false);
@@ -171,10 +184,19 @@ export function useAuth() {
             return;
         }
 
+        // Check if we've exceeded the maximum sign-in attempts
+        if (signInAttemptsRef.current >= MAX_SIGN_IN_ATTEMPTS) {
+            console.log(`Exceeded maximum sign-in attempts (${MAX_SIGN_IN_ATTEMPTS}), skipping login`);
+            return;
+        }
+
         try {
             console.log(`Starting login process for address: ${address}`);
             isProcessingRef.current = true;
             setIsLoading(true);
+
+            // Increment sign-in attempts counter
+            signInAttemptsRef.current += 1;
 
             // Set a timeout to reset the processing state if it gets stuck
             const timeoutId = setTimeout(resetProcessingState, 30000);
@@ -240,6 +262,7 @@ export function useAuth() {
         setHasCheckedExistingUser(false);
         currentAddressRef.current = null;
         isProcessingRef.current = false;
+        signInAttemptsRef.current = 0;
         disconnect();
     }, [disconnect]);
 
