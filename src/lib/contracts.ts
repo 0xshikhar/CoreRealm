@@ -19,3 +19,5 @@ export const contractABIs = {
     nft: nftABI,
     tokenMint: tokenMintABI,
 };
+
+export const streamKey = process.env.LIVEPEER_STREAM_KEY;

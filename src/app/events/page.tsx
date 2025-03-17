@@ -36,7 +36,7 @@ const explore = () => {
                         <div className="bg-[#202020] rounded-lg overflow-hidden shadow-xl">
                             <figure>
                                 <Image
-                                    src="/images/sui.png"
+                                    src="/images/portals.png"
                                     alt="Gaming Trends on Manta"
                                     width={500}
                                     height={200}
@@ -46,20 +46,21 @@ const explore = () => {
                             <div className="p-5">
                                 <div className="flex flex-wrap justify-between items-center mb-2">
                                     <div className="flex items-center space-x-2 mb-2 md:mb-0">
-                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">Nov 02</div>
+                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">March 20</div>
                                         <div className="font-Agda text-sm uppercase text-white">Starting At 6:00PM</div>
                                     </div>
                                     <div>
                                         <BiHeart className="text-xl text-gray-400 hover:text-[#98ee2c] cursor-pointer" />
                                     </div>
                                 </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Gaming Trends on Manta</h2>
-                                <button
+                                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Gaming Trends on Core Blockchain</h2>
+                                <Link
+                                    href="/events/1"
                                     className="flex items-center bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
                                 >
                                     Watch Live
                                     <BsArrowRight className="ml-2" />
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -77,7 +78,7 @@ const explore = () => {
                             <div className="p-5">
                                 <div className="flex flex-wrap justify-between items-center mb-2">
                                     <div className="flex items-center space-x-2 mb-2 md:mb-0">
-                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">Oct 20</div>
+                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">March 26</div>
                                         <div className="font-Agda text-sm uppercase text-white">Starting At 6:00PM</div>
                                     </div>
                                     <div>
@@ -85,12 +86,13 @@ const explore = () => {
                                     </div>
                                 </div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Tutorial: How to play Umi&rsquo;s friends and setup account</h2>
-                                <button
+                                <Link
+                                    href="/events/2"
                                     className="flex items-center bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
                                 >
                                     Watch Live
                                     <BsArrowRight className="ml-2" />
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -108,7 +110,7 @@ const explore = () => {
                             <div className="p-5">
                                 <div className="flex flex-wrap justify-between items-center mb-2">
                                     <div className="flex items-center space-x-2 mb-2 md:mb-0">
-                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">Nov 04</div>
+                                        <div className="font-Agda text-[16px] md:text-[18px] uppercase text-[#98ee2c]">March 27</div>
                                         <div className="font-Agda text-sm uppercase text-white">Starting At 6:00PM</div>
                                     </div>
                                     <div>
@@ -116,12 +118,13 @@ const explore = () => {
                                     </div>
                                 </div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Update: CyberPet introduces new skins and muchmore!</h2>
-                                <button
+                                <Link
+                                    href="/events/3"
                                     className="flex items-center bg-[#98ee2c] text-black px-4 py-2 rounded font-bold hover:bg-[#7bc922] transition-colors"
                                 >
                                     Watch Live
                                     <BsArrowRight className="ml-2" />
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
