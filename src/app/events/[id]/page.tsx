@@ -1,5 +1,5 @@
 import React from "react";
-import { BroadcastLoad } from "@/components/stream/Broadcast";
+import { BroadcastLoad, BroadcastPlayer } from "@/components/stream/BroadcastLoad";
 import { Src } from "@livepeer/react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -51,9 +51,11 @@ export default function EventPage({ params }: { params: { id: string } }) {
     }
 
     // Create source for the player
+    // 
     const src: Src[] = [
+        // @ts-ignore
         {
-            type: "playback",
+            type: "hls",
             src: event.playbackId,
         }
     ];
@@ -75,7 +77,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
                 <div className="lg:col-span-2">
                     <div className="bg-[#151515] rounded-lg overflow-hidden">
                         <div className="aspect-video">
-                            <BroadcastLoad src={src} />
+                            <BroadcastPlayer src={src} />
                         </div>
 
                         <div className="p-4">

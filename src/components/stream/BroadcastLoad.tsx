@@ -1,31 +1,37 @@
 "use client"
-import * as Broadcast from "@livepeer/react/broadcast";
+
+import React from "react"
+// @ts-ignore
+import { Player, Src } from "@livepeer/react"
 import { getIngest } from "@livepeer/react/external";
 import { streamKey } from "@/lib/contracts";
 
-export default function BroadcastLoad() {
-    return (
-        <Broadcast.Root ingestUrl={getIngest(streamKey)} >
-            <Broadcast.Container>
-                <Broadcast.Video
-                    title="Livestream"
-                    style={{ height: "100%", width: "100%" }
-                    }
-                />
+interface BroadcastLoadProps {
+    src: Src[]
+}
 
-                < Broadcast.LoadingIndicator
-                    style={{
-                        height: "100%",
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "black",
-                    }}
-                >
-                    Loading...
-                </Broadcast.LoadingIndicator>
-            </Broadcast.Container>
-        </Broadcast.Root>
+export function BroadcastPlayer({ src }: BroadcastLoadProps) {
+    return (
+        <Player
+            title="Livestream"
+            src={src}
+            autoPlay
+            muted
+            showPipButton
+            objectFit="contain"
+        />
+    )
+}
+
+export function BroadcastLoad() {
+    return (
+        <Player
+            title="Livestream"
+            src={getIngest(streamKey)}
+            autoPlay
+            muted
+            showPipButton
+            objectFit="contain"
+        />
     );
 };
