@@ -3,7 +3,7 @@ import { createPublicClient, http } from 'viem';
 
 export const agentChain = ({
     id: 1114,
-    name: 'Core Blockchain Testnet',
+    name: 'CoreDAO Testnet',
     nativeCurrency: {
         decimals: 18,
         name: 'tCORE2',
