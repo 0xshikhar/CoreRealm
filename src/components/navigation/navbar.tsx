@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { FaFaucetDrip } from "react-icons/fa6";
 import { User } from "lucide-react";
+import { AuthButton } from "@/components/AuthButton";
 
 
 const Navbar = () => {
@@ -161,7 +162,7 @@ const Navbar = () => {
 						<MdOutlineAccountBalanceWallet className="mr-2" /> Wallet
 					</div>
 					<div className="py-2">
-						<ConnectButton />
+						<AuthButton />
 					</div>
 				</div>
 			</div>

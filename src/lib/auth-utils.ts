@@ -1,36 +1,31 @@
-import { verifyMessage } from 'viem'
+import { SiweMessage, generateNonce as siweGenerateNonce } from 'siwe'
 import publicClient from './customChain'
 
+// Generate a nonce for authentication
 export function generateNonce(): string {
-    return Math.floor(Math.random() * 1000000).toString()
+    return siweGenerateNonce();
 }
 
 /**
- * Verifies a message signature
- * @param message The original message that was signed
+ * Verifies a message signature using SIWE
+ * @param message The SIWE message that was signed
  * @param signature The signature to verify
- * @param address The address that supposedly signed the message
- * @returns True if the signature is valid, false otherwise
+ * @returns Promise that resolves when verification is successful
  */
-export async function verifySignature(message: string, signature: string, address: string): Promise<boolean> {
+export async function verifySignature(message: string, signature: string): Promise<boolean> {
     try {
-        // Convert the address to the required `0x${string}` format
-        const formattedAddress = address as `0x${string}`
+        const siweMessage = new SiweMessage(message);
+        const { success, data } = await siweMessage.verify({ signature });
 
-        // Convert the signature to the required format
-        const formattedSignature = signature as `0x${string}`
+        if (!success) {
+            console.error('SIWE verification failed:', data);
+            return false;
+        }
 
-        // Use await since verifyMessage returns a Promise<boolean>
-        const isValid = await verifyMessage({
-            address: formattedAddress,
-            message,
-            signature: formattedSignature,
-        })
-
-        return isValid
+        return true;
     } catch (error) {
-        console.error('Error verifying signature:', error)
-        return false
+        console.error('Error verifying SIWE signature:', error);
+        return false;
     }
 }
 
@@ -58,12 +53,49 @@ export function getSession(sessionId: string): string | null {
     return session.address
 }
 
+// Create a SIWE message for signing
+export function createSiweMessage(address: string, nonce: string, chainId: number) {
+    // Ensure the domain matches exactly what your server expects
+    const domain = window.location.host;
+    const origin = window.location.origin;
+
+    console.log('Creating SIWE message with:', {
+        domain,
+        origin,
+        address,
+        chainId,
+        nonce
+    });
+
+    const message = new SiweMessage({
+        domain,
+        address,
+        statement: 'Sign in to Core Realm',
+        uri: origin,
+        version: '1',
+        chainId,
+        nonce,
+        issuedAt: new Date().toISOString(),
+    });
+
+    const preparedMessage = message.prepareMessage();
+    console.log('Prepared SIWE message:', preparedMessage);
+
+    return preparedMessage;
+}
+
 /**
- * Creates a message for signing
- * @param address The user's address
- * @param nonce A random nonce for security
- * @returns A formatted message string
+ * Check if the user is authenticated via JWT token
+ * @returns True if the user has a valid auth token, false otherwise
  */
-export function createSignMessage(address: string, nonce: string): string {
-    return `Sign this message to authenticate with CoreRealm.\n\nAddress: ${address}\nNonce: ${nonce}\nTimestamp: ${Date.now()}`
+export function isAuthenticated(): boolean {
+    return !!localStorage.getItem('auth_token')
+}
+
+/**
+ * Get the stored auth token
+ * @returns The JWT token or null if not authenticated
+ */
+export function getAuthToken(): string | null {
+    return localStorage.getItem('auth_token')
 } 

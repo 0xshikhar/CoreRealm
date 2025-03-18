@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAccount, useBalance, useSignMessage } from "wagmi"
+import { useAccount, useBalance } from "wagmi"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,7 +12,6 @@ import { Loader2, Trophy, History, Wallet, Gamepad, Calendar } from "lucide-reac
 import Link from "next/link"
 import Image from "next/image"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { generateNonce, verifySignature } from "@/lib/auth-utils"
 import { GameScoreCard } from "@/components/profile/GameScoreCard"
 import { contractAddresses } from "@/lib/contracts"
 
@@ -62,13 +61,11 @@ interface GameActivity {
 
 export default function ProfilePage() {
     const { address, isConnected } = useAccount()
-    const { signMessageAsync } = useSignMessage()
 
     const [profile, setProfile] = useState<UserProfile | null>(null)
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [gameStats, setGameStats] = useState<GameStat[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isProfileLoading, setIsProfileLoading] = useState(true)
 
     // Get REALM token balance
     const { data: tokenBalance, isLoading: isBalanceLoading } = useBalance({
@@ -76,80 +73,78 @@ export default function ProfilePage() {
         token: TOKEN_CONTRACT_ADDRESS as `0x${string}`,
     })
 
-    // Handle wallet authentication
+    // Fetch profile data when connected
     useEffect(() => {
-        async function authenticateWallet() {
-            if (!isConnected || !address) {
-                setIsAuthenticated(false)
-                return
-            }
-
-            try {
-                // Generate a nonce for the user to sign
-                const nonce = generateNonce()
-
-                // Ask user to sign the message
-                const message = `Sign this message to authenticate with CoreRealm: ${nonce}`
-                const signature = await signMessageAsync({ message })
-
-                // Verify the signature
-                const isValid = await verifySignature(message, signature, address)
-
-                if (isValid) {
-                    setIsAuthenticated(true)
-                    fetchProfileData()
-                } else {
-                    setIsAuthenticated(false)
-                }
-            } catch (error) {
-                console.error("Authentication failed:", error)
-                setIsAuthenticated(false)
-            }
+        if (isConnected && address) {
+            fetchProfileData()
         }
-
-        authenticateWallet()
-    }, [address, isConnected, signMessageAsync, fetchProfileData])
+    }, [isConnected, address])
 
     async function fetchProfileData() {
-        if (!isConnected || !address) return
+        if (!address) return;
 
+        setIsProfileLoading(true);
         try {
-            setIsLoading(true)
-
-            // Fetch profile data
-            const profileRes = await fetch(`/api/profile?address=${address}`)
-            const profileData = await profileRes.json()
-
-            if (profileData.user) {
-                setProfile(profileData.user)
+            // Fetch profile data directly without authentication headers
+            const profileRes = await fetch(`/api/profile?address=${address}`);
+            if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                if (profileData.user) {
+                    setProfile(profileData.user);
+                }
+            } else {
+                console.error("Error fetching profile:", profileRes.statusText);
             }
 
             // Fetch transactions
-            const txRes = await fetch(`/api/profile/transactions?address=${address}`)
-            const txData = await txRes.json()
-
-            if (txData.transactions) {
-                setTransactions(txData.transactions)
+            const txRes = await fetch(`/api/profile/transactions?address=${address}`);
+            console.log("Transaction API response status:", txRes.status);
+            if (txRes.ok) {
+                const txData = await txRes.json();
+                console.log("Raw transaction data:", txData);
+                if (txData.transactions) {
+                    // Make sure we're getting an array and it has elements
+                    if (Array.isArray(txData.transactions) && txData.transactions.length > 0) {
+                        setTransactions(txData.transactions);
+                        console.log("Transactions loaded:", txData.transactions.length);
+                    } else {
+                        console.error("Transactions array is empty:", txData.transactions);
+                        setTransactions([]);
+                    }
+                } else {
+                    console.error("No transactions array in response:", txData);
+                    setTransactions([]);
+                }
+            } else {
+                console.error("Error fetching transactions:", txRes.statusText);
+                setTransactions([]);
             }
 
             // Fetch game stats
-            const gameRes = await fetch(`/api/profile/games?address=${address}`)
-            const gameData = await gameRes.json()
-
-            if (gameData.gameStats) {
-                setGameStats(gameData.gameStats)
+            const gameRes = await fetch(`/api/profile/games?address=${address}`);
+            if (gameRes.ok) {
+                const gameData = await gameRes.json();
+                // Handle the case where gameStats might be undefined
+                setGameStats(gameData.gameStats || []);
+                console.log("Game stats loaded:", (gameData.gameStats || []).length);
+            } else {
+                console.error("Error fetching game stats:", gameRes.statusText);
+                // Set empty array to prevent undefined errors
+                setGameStats([]);
             }
         } catch (error) {
-            console.error("Error fetching profile data:", error)
+            console.error("Error fetching profile data:", error);
+            // Set empty arrays to prevent rendering issues
+            setTransactions([]);
+            setGameStats([]);
         } finally {
-            setIsLoading(false)
+            setIsProfileLoading(false);
         }
     }
 
     const gamesPlayedCount = transactions.filter(tx => tx.type === "GAME_PAYMENT").length;
 
-
-    if (isLoading) {
+    if (isProfileLoading) {
         return (
             <div className="container mx-auto py-10 px-4">
                 <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -185,7 +180,6 @@ export default function ProfilePage() {
                         <CardContent>
                             <div className="flex flex-col items-center mb-6">
                                 <Avatar className="h-24 w-24 mb-4">
-                                    {/* <AvatarImage src={profile?.image || ""} /> */}
                                     <AvatarFallback className="bg-[#151515] text-[#98ee2c] text-xl">
                                         {profile?.name?.charAt(0) || "U"}
                                     </AvatarFallback>
@@ -360,9 +354,13 @@ export default function ProfilePage() {
                                                             <h3 className="text-lg font-bold">{stat.game.name}</h3>
                                                             <div className="flex items-center text-sm text-gray-400">
                                                                 <span className="mr-3">Played: {stat.playCount} times</span>
-                                                                {stat.transactionTimes.length > 0 && (
+                                                                {stat.transactionTimes && stat.transactionTimes.length > 0 && (
                                                                     <span>
-                                                                        Last played: {new Date(stat.transactionTimes[stat.transactionTimes.length - 1]).toLocaleString()}
+                                                                        Last played: {typeof stat.transactionTimes[0] === 'string'
+                                                                            ? new Date(stat.transactionTimes[0]).toLocaleString()
+                                                                            : stat.transactionTimes[0] instanceof Date
+                                                                                ? stat.transactionTimes[0].toLocaleString()
+                                                                                : 'Unknown date'}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -440,10 +438,14 @@ export default function ProfilePage() {
                                                                 >
                                                                     {tx.type.replace("_", " ")}
                                                                 </Badge>
-                                                                <h3 className="font-medium">{tx.description}</h3>
+                                                                <h3 className="font-medium">{tx.description || 'Transaction'}</h3>
                                                             </div>
                                                             <p className="text-sm text-gray-400 mt-1">
-                                                                {new Date(tx.createdAt).toLocaleString()}
+                                                                {typeof tx.createdAt === 'string'
+                                                                    ? new Date(tx.createdAt).toLocaleString()
+                                                                    : tx.createdAt instanceof Date
+                                                                        ? tx.createdAt.toLocaleString()
+                                                                        : 'Unknown date'}
                                                             </p>
                                                         </div>
                                                         <div className="text-right">

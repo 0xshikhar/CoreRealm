@@ -4,67 +4,74 @@ import { verifyJwtToken } from '@/lib/auth';
 // Add paths that should be protected
 const protectedPaths = [
     '/api/protected',
-    '/api/user',
-    '/api/auth/validate',
-    // Add other protected API routes
+    // Add other protected paths here
 ];
 
-// Add this list for paths that should bypass token verification
+// Add paths that should be explicitly public (no auth required)
 const publicPaths = [
+    '/api/user/register',
     '/api/user/check',
     '/api/auth/login',
+    '/api/auth/test-siwe',
+    '/api/user',
+    '/api/profile',
+    '/api/events',
 ];
 
-export default async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Log the request path for debugging
-    console.log(`Middleware processing: ${pathname}`);
-
-    // Skip middleware for public paths
+    // Check if the path is in the public paths list
     if (publicPaths.some(path => pathname.startsWith(path))) {
-        console.log(`Skipping middleware for public path: ${pathname}`);
+        console.log(`Middleware: Allowing public access to ${pathname}`);
         return NextResponse.next();
     }
 
     // Check if the path should be protected
-    if (protectedPaths.some(path => pathname.startsWith(path))) {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
 
-        if (!token) {
-            console.log(`No token provided for protected path: ${pathname}`);
-            return NextResponse.json(
-                { error: 'No token provided' },
-                { status: 401 }
-            );
-        }
-
-        try {
-            // Verify the token
-            const decoded = await verifyJwtToken(token);
-            console.log(`Token verified for user: ${decoded.userId}`);
-
-            // Add user info to request headers to be accessible in route handlers
-            const requestHeaders = new Headers(request.headers);
-            requestHeaders.set('x-user-id', decoded.userId);
-            requestHeaders.set('x-user-address', decoded.address);
-
-            // Return the request with modified headers
-            return NextResponse.next({
-                request: {
-                    headers: requestHeaders,
-                },
-            });
-        } catch (error) {
-            console.error(`Token verification failed for path ${pathname}:`, error);
-            return NextResponse.json(
-                { error: 'Invalid token' },
-                { status: 401 }
-            );
-        }
+    if (!isProtectedPath) {
+        return NextResponse.next();
     }
 
-    return NextResponse.next();
+    console.log(`Middleware: Checking auth for protected path: ${pathname}`);
+
+    // Get the token from the request headers
+    const authHeader = request.headers.get('authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('Middleware: No token provided');
+        return NextResponse.json(
+            { error: 'Authentication required' },
+            { status: 401 }
+        );
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        // Verify the token
+        const decoded = await verifyJwtToken(token);
+        console.log(`Middleware: Valid token for user: ${decoded.userId}`);
+
+        // Add user info to request headers to be accessible in route handlers
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set('x-user-id', decoded.userId);
+        requestHeaders.set('x-user-address', decoded.address);
+
+        // Return the request with modified headers
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    } catch (error) {
+        console.error(`Middleware: Token verification failed:`, error);
+        return NextResponse.json(
+            { error: 'Invalid token' },
+            { status: 401 }
+        );
+    }
 }
 
 // Configure middleware to run only on API routes

@@ -29,7 +29,7 @@ interface GameScoreCardProps {
 }
 
 export function GameScoreCard({ walletAddress }: GameScoreCardProps) {
-    const [gameStats, setGameStats] = useState<GameStat[]>([])
+    const [scores, setScores] = useState<GameScore[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -39,17 +39,19 @@ export function GameScoreCard({ walletAddress }: GameScoreCardProps) {
 
             try {
                 setIsLoading(true)
-                const response = await fetch(`/api/profile/games?address=${walletAddress}`)
+                setError(null)
+                const response = await fetch(`/api/profile/games/scores?address=${walletAddress}`)
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch game stats")
+                    throw new Error(`Failed to fetch scores: ${response.status}`)
                 }
 
                 const data = await response.json()
-                setGameStats(data.gameStats || [])
+                setScores(data.scores || [])
             } catch (err) {
-                console.error("Error fetching game stats:", err)
-                setError("Failed to load game statistics")
+                console.error("Error fetching game scores:", err)
+                // Convert error to string to avoid rendering objects directly
+                setError(err instanceof Error ? err.message : String(err))
             } finally {
                 setIsLoading(false)
             }
@@ -59,37 +61,58 @@ export function GameScoreCard({ walletAddress }: GameScoreCardProps) {
     }, [walletAddress])
 
     if (isLoading) {
-        return <GameScoreCardSkeleton />
+        return (
+            <Card className="bg-[#202020] border-gray-700 text-white">
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Trophy className="mr-2 h-5 w-5" />
+                        Top Scores
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">Your highest game scores</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <Skeleton className="h-20 w-full bg-gray-700" />
+                        <Skeleton className="h-20 w-full bg-gray-700" />
+                    </div>
+                </CardContent>
+            </Card>
+        )
     }
 
+    // Handle error state
     if (error) {
         return (
-            <Card>
+            <Card className="bg-[#202020] border-gray-700 text-white">
                 <CardHeader>
-                    <CardTitle>Game Statistics</CardTitle>
-                    <CardDescription>Your gaming achievements</CardDescription>
+                    <CardTitle className="flex items-center">
+                        <Trophy className="mr-2 h-5 w-5" />
+                        Top Scores
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">Your highest game scores</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-center h-40">
-                        <p className="text-muted-foreground">{error}</p>
+                    <div className="p-4 bg-red-900/30 rounded-md text-red-300">
+                        <p>Failed to load scores: {error}</p>
                     </div>
                 </CardContent>
             </Card>
         )
     }
 
-    if (gameStats.length === 0) {
+    if (scores.length === 0) {
         return (
-            <Card>
+            <Card className="bg-[#202020] border-gray-700 text-white">
                 <CardHeader>
-                    <CardTitle>Game Statistics</CardTitle>
-                    <CardDescription>Your gaming achievements</CardDescription>
+                    <CardTitle className="flex items-center">
+                        <Trophy className="mr-2 h-5 w-5" />
+                        Top Scores
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">Your highest game scores</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col items-center justify-center h-40 gap-2">
-                        <GamepadIcon className="h-10 w-10 text-muted-foreground opacity-50" />
-                        <p className="text-muted-foreground">No game activity yet</p>
-                        <p className="text-sm text-muted-foreground">Play some games to see your stats here!</p>
+                    <div className="text-center py-6">
+                        <p className="text-gray-400">No game scores yet. Start playing to see your scores here!</p>
                     </div>
                 </CardContent>
             </Card>
@@ -97,104 +120,34 @@ export function GameScoreCard({ walletAddress }: GameScoreCardProps) {
     }
 
     return (
-        <Card>
+        <Card className="bg-[#202020] border-gray-700 text-white">
             <CardHeader>
-                <CardTitle>Game Statistics</CardTitle>
-                <CardDescription>Your gaming achievements</CardDescription>
+                <CardTitle className="flex items-center">
+                    <Trophy className="mr-2 h-5 w-5" />
+                    Top Scores
+                </CardTitle>
+                <CardDescription className="text-gray-400">Your highest game scores</CardDescription>
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue="all">
-                    <TabsList className="mb-4">
-                        <TabsTrigger value="all">All Games</TabsTrigger>
-                        <TabsTrigger value="recent">Recently Played</TabsTrigger>
-                        <TabsTrigger value="highscores">High Scores</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="all" className="space-y-4">
-                        {gameStats.map((stat) => (
-                            <GameStatItem key={stat.game.id} stat={stat} />
-                        ))}
-                    </TabsContent>
-
-                    <TabsContent value="recent" className="space-y-4">
-                        {gameStats
-                            .filter(stat => stat.lastPlayed)
-                            .sort((a, b) =>
-                                new Date(b.lastPlayed || 0).getTime() - new Date(a.lastPlayed || 0).getTime()
-                            )
-                            .slice(0, 5)
-                            .map((stat) => (
-                                <GameStatItem key={stat.game.id} stat={stat} />
-                            ))}
-                    </TabsContent>
-
-                    <TabsContent value="highscores" className="space-y-4">
-                        {gameStats
-                            .filter(stat => stat.highScore > 0)
-                            .sort((a, b) => b.highScore - a.highScore)
-                            .map((stat) => (
-                                <GameStatItem key={stat.game.id} stat={stat} />
-                            ))}
-                    </TabsContent>
-                </Tabs>
+                <div className="space-y-4">
+                    {scores.map((score) => (
+                        <div key={score.id} className="bg-[#151515] p-4 rounded-lg">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="font-bold">{score.game?.name || "Unknown Game"}</h3>
+                                    <p className="text-sm text-gray-400">
+                                        {typeof score.achievedAt === 'string'
+                                            ? new Date(score.achievedAt).toLocaleDateString()
+                                            : 'Unknown date'}
+                                    </p>
+                                </div>
+                                <div className="text-2xl font-bold text-[#98ee2c]">{score.score}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </CardContent>
-            <CardFooter className="text-xs text-muted-foreground">
-                Stats are updated after each game play
-            </CardFooter>
         </Card>
-    )
-}
-
-function GameStatItem({ stat }: { stat: GameStat }) {
-    return (
-        <div className="flex items-start space-x-4 p-3 rounded-lg border bg-card">
-            <div className="h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
-                {stat.game.imageUrl ? (
-                    <img
-                        src={stat.game.imageUrl}
-                        alt={stat.game.name}
-                        className="h-full w-full object-cover"
-                    />
-                ) : (
-                    <div className="h-full w-full bg-muted flex items-center justify-center">
-                        <GamepadIcon className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm">{stat.game.name}</h4>
-                <p className="text-xs text-muted-foreground line-clamp-1">{stat.game.description}</p>
-
-                <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                        <Trophy className="h-3 w-3" />
-                        {stat.highScore.toLocaleString()}
-                    </Badge>
-
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                        <GamepadIcon className="h-3 w-3" />
-                        {stat.playCount} {stat.playCount === 1 ? 'play' : 'plays'}
-                    </Badge>
-
-                    {stat.lastPlayed && (
-                        <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                            <Clock className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(stat.lastPlayed), { addSuffix: true })}
-                        </Badge>
-                    )}
-                </div>
-            </div>
-
-            {stat.recentScores.length > 0 && (
-                <div className="flex-shrink-0 flex items-center">
-                    <div className="flex flex-col items-end">
-                        <span className="text-xs text-muted-foreground">Recent</span>
-                        <span className="font-medium">{stat.recentScores[0].score.toLocaleString()}</span>
-                    </div>
-                </div>
-            )}
-        </div>
     )
 }
 

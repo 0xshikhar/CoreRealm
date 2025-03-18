@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getSession } from "@/lib/auth-utils"
 
 export async function GET(req: NextRequest) {
     try {
-        const address = req.nextUrl.searchParams.get("address")
+        // Get the address from the query parameters
+        const { searchParams } = new URL(req.url);
+        const address = searchParams.get('address');
 
         if (!address) {
             return NextResponse.json(
@@ -13,34 +14,31 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        // Find or create user by wallet address
-        let user = await db.user.findUnique({
-            where: { walletAddress: address },
-        })
+        // Find the user by wallet address
+        const user = await db.user.findUnique({
+            where: { walletAddress: address.toLowerCase() },
+            select: {
+                id: true,
+                walletAddress: true,
+                name: true,
+                createdAt: true,
+            }
+        });
 
         if (!user) {
-            // Create a new user if they don't exist
-            user = await db.user.create({
-                data: {
-                    walletAddress: address,
-                },
-            })
+            return NextResponse.json(
+                { error: 'User not found' },
+                { status: 404 }
+            );
         }
 
-        return NextResponse.json({
-            user: {
-                id: user.id,
-                walletAddress: user.walletAddress,
-                name: user.name || null,
-                createdAt: user.createdAt,
-            }
-        })
+        return NextResponse.json({ user });
     } catch (error) {
-        console.error("Error fetching profile:", error)
+        console.error('Profile API: Error fetching user profile:', error);
         return NextResponse.json(
-            { error: "Failed to fetch profile" },
+            { error: 'Failed to fetch user profile' },
             { status: 500 }
-        )
+        );
     }
 }
 

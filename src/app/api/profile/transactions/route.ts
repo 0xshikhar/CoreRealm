@@ -3,7 +3,9 @@ import { db } from "@/lib/db"
 
 export async function GET(req: NextRequest) {
     try {
-        const address = req.nextUrl.searchParams.get("address")
+        // Get the address from the query parameters
+        const { searchParams } = new URL(req.url);
+        const address = searchParams.get('address');
 
         if (!address) {
             return NextResponse.json(
@@ -12,29 +14,43 @@ export async function GET(req: NextRequest) {
             )
         }
 
+        console.log("Fetching transactions for address:", address);
+
+        // Find the user by wallet address
         const user = await db.user.findUnique({
-            where: { walletAddress: address },
-        })
+            where: { walletAddress: address.toLowerCase() },
+            select: { id: true }
+        });
 
         if (!user) {
             return NextResponse.json(
-                { error: "User not found" },
+                { error: 'User not found' },
                 { status: 404 }
-            )
+            );
         }
 
+        // Fetch transactions for the user
         const transactions = await db.transaction.findMany({
             where: { userId: user.id },
-            orderBy: { createdAt: "desc" },
-        })
+            orderBy: { createdAt: 'desc' },
+        });
 
-        return NextResponse.json({ transactions })
+        console.log("User found:", user);
+        console.log("Transactions found:", transactions.length);
+        console.log("First few transactions:", transactions.slice(0, 2));
+
+        return NextResponse.json({
+            transactions: transactions.map(tx => ({
+                ...tx,
+                createdAt: tx.createdAt instanceof Date ? tx.createdAt.toISOString() : tx.createdAt
+            }))
+        });
     } catch (error) {
-        console.error("Error fetching transactions:", error)
+        console.error('Profile API: Error fetching transactions:', error);
         return NextResponse.json(
-            { error: "Failed to fetch transactions" },
+            { error: 'Failed to fetch transactions' },
             { status: 500 }
-        )
+        );
     }
 }
 
@@ -50,7 +66,7 @@ export async function POST(req: NextRequest) {
         }
 
         const user = await db.user.findUnique({
-            where: { walletAddress: address },
+            where: { walletAddress: address.toLowerCase() },
         })
 
         if (!user) {

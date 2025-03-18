@@ -1,20 +1,40 @@
 import { generateNonce, SiweMessage } from 'siwe';
 // import { prisma } from './prisma';
 import jwt from 'jsonwebtoken';
+import { JwtPayload as JwtPayloadType } from 'jsonwebtoken';
 
-export async function createAuthMessage(address: string, chainId: number) {
-    const nonce = generateNonce();
-    const message = new SiweMessage({
-        domain: window.location.host,
-        address,
-        statement: 'Sign in to Core Realm',
-        uri: window.location.origin,
-        version: '1',
-        chainId,
-        nonce
-    });
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-    return message.prepareMessage();
+// Extended JWT payload with our custom fields
+interface CustomJwtPayload extends JwtPayloadType {
+    userId: string;
+    address: string;
+}
+
+// Create a JWT token
+export function createJwtToken(payload: { userId: string; address: string }) {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+}
+
+// Verify a JWT token
+export async function verifyJwtToken(token: string): Promise<CustomJwtPayload> {
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as CustomJwtPayload;
+        return decoded;
+    } catch (error) {
+        console.error('JWT verification failed:', error);
+        throw error;
+    }
+}
+
+// Create an authentication message for signing
+export function createAuthMessage(address: string, nonce: string, chainId?: number): string {
+    return `Sign this message to authenticate with CoreRealm.
+
+Wallet: ${address}
+Nonce: ${nonce}
+Chain ID: ${chainId || 1}
+Timestamp: ${Date.now()}`;
 }
 
 export async function verifySignature(message: string, signature: string) {
@@ -40,25 +60,6 @@ export function generateJwtToken(payload: Omit<JwtPayload, 'iat' | 'exp'>) {
     }
 
     return jwt.sign(payload, secret, { expiresIn: '1d' });
-}
-
-// Verify a JWT token
-export async function verifyJwtToken(token: string): Promise<JwtPayload> {
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-        throw new Error('JWT_SECRET is not defined in environment variables');
-    }
-
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, secret, (err, decoded) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(decoded as JwtPayload);
-            }
-        });
-    });
 }
 
 // Debug function to check token validity
