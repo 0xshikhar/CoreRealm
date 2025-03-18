@@ -1,4 +1,4 @@
-# CoreRealm Web3 Gaming Platform - Product Document
+# CoreRealm
 
 ## 1. Project Overview
 
