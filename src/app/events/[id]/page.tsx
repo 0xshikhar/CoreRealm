@@ -1,10 +1,19 @@
-import React from "react";
+"use client"
+import React, { useState, useEffect, useRef } from "react";
 import { PlayerWithControls } from "@/components/stream/StreamPlayer";
 import { Src } from "@livepeer/react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BsArrowLeft } from "react-icons/bs";
 import { BiChat, BiHeart, BiShare } from "react-icons/bi";
+import { useAccount } from "wagmi";
+// Message type definition
+interface ChatMessage {
+    id: string;
+    text: string;
+    sender: string;
+    timestamp: number;
+}
 
 const events = [
     {
@@ -42,9 +51,30 @@ const events = [
     }
 ];
 
-
 export default function EventPage({ params }: { params: { id: string } }) {
+    const { address } = useAccount();
     const event = events.find(e => e.id === params.id);
+    const [message, setMessage] = useState("");
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+
+    // Mock wallet address - in a real app, this would come from your authentication system
+    const userWalletAddress = address
+
+    // Load messages from localStorage on component mount
+    useEffect(() => {
+        const storedMessages = localStorage.getItem(`event-${params.id}-messages`);
+        if (storedMessages) {
+            setMessages(JSON.parse(storedMessages));
+        }
+    }, [params.id]);
+
+    // Scroll to bottom of chat when messages change
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     if (!event) {
         return notFound();
@@ -58,6 +88,40 @@ export default function EventPage({ params }: { params: { id: string } }) {
             src: event.playbackId,
         }
     ];
+
+    // Handle sending a new message
+    const handleSendMessage = () => {
+        if (message.trim() === "") return;
+
+        const newMessage: ChatMessage = {
+            id: Date.now().toString(),
+            text: message,
+            sender: address || "",
+            timestamp: Date.now()
+        };
+
+        const updatedMessages = [...messages, newMessage];
+        setMessages(updatedMessages);
+
+        // Save to localStorage
+        localStorage.setItem(`event-${params.id}-messages`, JSON.stringify(updatedMessages));
+
+        // Clear input
+        setMessage("");
+    };
+
+    // Handle pressing Enter to send message
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSendMessage();
+        }
+    };
+
+    // Format timestamp
+    const formatTime = (timestamp: number) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -112,55 +176,53 @@ export default function EventPage({ params }: { params: { id: string } }) {
                             <BiChat className="mr-2" />
                             Live Chat
                         </h2>
-                        <span className="text-sm text-gray-400">{Math.floor(event.viewers * 0.3)} chatting</span>
+                        <span className="text-sm text-gray-400">{2} chatting</span>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto mb-4 bg-[#0c0c0c] rounded-md p-3">
-                        {/* Chat messages would go here */}
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-2">
-                                <div className="w-8 h-8 rounded-full bg-[#98ee2c] flex items-center justify-center text-black font-bold">M</div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-white">MantaGamer</span>
-                                        <span className="text-xs text-gray-400">5:42 PM</span>
+                    <div
+                        ref={chatContainerRef}
+                        className="flex-grow overflow-y-auto mb-4 bg-[#0c0c0c] rounded-md p-3"
+                    >
+                        {messages.length === 0 ? (
+                            <div className="text-gray-500 text-center py-4">No messages yet. Be the first to chat!</div>
+                        ) : (
+                            messages.map((msg) => (
+                                <div key={msg.id} className="mb-3">
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs text-[#98ee2c]">
+                                            {msg.sender.slice(0, 2)}
+                                        </div>
+                                        <div className="ml-2">
+                                            <div className="flex items-center">
+                                                <span className="text-[#98ee2c] text-sm font-medium">
+                                                    {msg.sender.slice(0, 6)}...{msg.sender.slice(-4)}
+                                                </span>
+                                                <span className="ml-2 text-gray-500 text-xs">
+                                                    {formatTime(msg.timestamp)}
+                                                </span>
+                                            </div>
+                                            <p className="text-white text-sm mt-1">{msg.text}</p>
+                                        </div>
                                     </div>
-                                    <p className="text-gray-300">This stream is amazing! Can&apos;t wait to see the new features.</p>
                                 </div>
-                            </div>
-
-                            <div className="flex items-start gap-2">
-                                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">C</div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-white">CryptoPlayer</span>
-                                        <span className="text-xs text-gray-400">5:43 PM</span>
-                                    </div>
-                                    <p className="text-gray-300">How do I get the new skins? Are they available now?</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">U</div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-white">UmiLover</span>
-                                        <span className="text-xs text-gray-400">5:45 PM</span>
-                                    </div>
-                                    <p className="text-gray-300">The graphics look so much better in this update!</p>
-                                </div>
-                            </div>
-                        </div>
+                            ))
+                        )}
                     </div>
 
                     <div className="mt-auto">
                         <div className="relative">
                             <input
                                 type="text"
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                onKeyPress={handleKeyPress}
                                 placeholder="Send a message..."
                                 className="w-full bg-[#0c0c0c] border border-gray-800 rounded-md py-2 px-4 text-white focus:outline-none focus:border-[#98ee2c]"
                             />
-                            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#98ee2c] font-medium">
+                            <button
+                                onClick={handleSendMessage}
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#98ee2c] font-medium"
+                            >
                                 Send
                             </button>
                         </div>
